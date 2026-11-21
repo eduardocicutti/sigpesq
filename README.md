@@ -77,6 +77,15 @@ Os relacionamentos devem representar participantes em vários projetos, financia
 
 **Etapa atual:** planejamento do frontend. A implementação da interface, da API e a integração com o MySQL fazem parte das próximas etapas.
 
+### Executar o frontend
+
+No PowerShell do Windows, use `npm.cmd` caso a política de execução bloqueie `npm.ps1`:
+
+```powershell
+cd frontend
+npm.cmd run dev
+```
+
 ---
 
 Ícones de [Tabler Icons](https://tabler.io/icons), sob [licença MIT](assets/icons/LICENSE).
