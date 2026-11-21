@@ -1,0 +1,21 @@
+# Dependências e saídas de desenvolvimento
+node_modules/
+dist/
+build/
+coverage/
+*.log
+
+# Configurações e credenciais locais
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Arquivos temporários
+tmp/
+temp/
+__pycache__/
+*.pyc
+~$*
+.DS_Store
+Thumbs.db
