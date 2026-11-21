@@ -19,3 +19,11 @@ __pycache__/
 ~$*
 .DS_Store
 Thumbs.db
+
+# Instruções locais de agentes e planejamento do desenvolvimento
+[Aa][Gg][Ee][Nn][Tt][Ss].[Mm][Dd]
+.agents/
+.codex/
+/docs/FONTES.md
+/docs/PLANO.md
+/docs/SKILLS.md
