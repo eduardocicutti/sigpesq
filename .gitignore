@@ -3,6 +3,8 @@ node_modules/
 dist/
 build/
 coverage/
+.vite/
+*.tsbuildinfo
 *.log
 
 # Configurações e credenciais locais
@@ -28,6 +30,10 @@ Thumbs.db
 /docs/PLANO.md
 /docs/SKILLS.md
 /docs/planejamento/
+/docs/design-system.md
+/docs/design-guidelines.md
+/docs/visual-references.md
+/docs/screen-specifications.md
 /PRODUCT.md
 /DESIGN.md
 /.impeccable/
