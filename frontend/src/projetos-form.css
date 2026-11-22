@@ -1,0 +1,86 @@
+.projeto-form {
+  max-width: 52rem;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  background: white;
+  border: 1px solid var(--linha, #dce6ef);
+  border-radius: 12px;
+}
+
+.projeto-form .projeto-form__campos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.25rem;
+}
+
+.projeto-form .projeto-form__campo {
+  display: grid;
+  align-content: start;
+  gap: .4rem;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.projeto-form .projeto-form__campo--largo,
+.projeto-form .projeto-form__campo:has(textarea) {
+  grid-column: 1 / -1;
+}
+
+.projeto-form :is(input, select, textarea) {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: .55rem .8rem;
+  border: 1px solid #839cb2;
+  border-radius: 7px;
+  background: white;
+  color: inherit;
+  font: inherit;
+  font-weight: 400;
+}
+
+.projeto-form textarea {
+  min-height: 6.5rem;
+  resize: vertical;
+}
+
+.projeto-form fieldset { min-width: 0; border: 1px solid #839cb2; border-radius: 7px; }
+.projeto-form .opcao-projeto { display: flex; align-items: center; gap: .5rem; padding: .4rem 0; }
+.projeto-form .opcao-projeto input { width: auto; min-height: auto; }
+
+.projeto-form :is(input, select, textarea):is([readonly], :disabled) {
+  background: #eef4f9;
+  color: #405a74;
+}
+
+.projeto-form [aria-invalid="true"] {
+  border-color: #a02732;
+}
+
+.projeto-form .projeto-form__erro {
+  padding: .75rem 1rem;
+  border-inline-start: 3px solid #a02732;
+  border-radius: 4px;
+  background: #fff1f2;
+  color: #8c2431;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.projeto-form .projeto-form__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--linha, #dce6ef);
+}
+
+.projeto-form .projeto-form__acoes button {
+  min-height: 2.75rem;
+}
+
+@media (max-width: 840px) {
+  .projeto-form .projeto-form__campos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

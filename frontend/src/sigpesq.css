@@ -14,6 +14,7 @@ h1 { margin: 0 0 1rem; font-size: 1.65rem; line-height: 1.25; }
 h2 { margin: 0 0 1rem; font-size: 1.12rem; }
 button, input, select { font: inherit; }
 button, input, select { border: 1px solid #afc2d4; border-radius: 7px; padding: .55rem .8rem; }
+input, select { border-color: #7891a8; max-width: 100%; }
 button { cursor: pointer; background: white; color: #173c5e; }
 button:hover { background: #e5eff8; }
 button:disabled { cursor: default; opacity: .65; }
@@ -54,7 +55,7 @@ small { display: block; }
 .primario:hover { background: #204f78; }
 @media (max-width: 680px) {
   .estrutura { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
-  nav { display: flex; gap: .4rem; padding: .5rem 1rem; }
+  nav { display: flex; flex-wrap: wrap; gap: .4rem; padding: .5rem 1rem; }
   nav button { width: auto; margin: 0; }
   .topo { padding-inline: 1rem; gap: .65rem; }
 }
