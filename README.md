@@ -73,7 +73,6 @@ Os relacionamentos devem representar participantes em vários projetos, financia
 | Material | Local |
 | :-- | :-- |
 | Enunciado do trabalho | [Case_SIGPesq.pdf](docs/fontes/Case_SIGPesq.pdf) |
-| Referências visuais | [referencias/](referencias/) |
 
 **Etapa atual:** planejamento do frontend. A implementação da interface, da API e a integração com o MySQL fazem parte das próximas etapas.
 
