@@ -46,11 +46,19 @@ small { display: block; }
 .link { border: 0; color: #165385; padding: .25rem 0; background: transparent; text-align: left; text-decoration: underline; text-underline-offset: .16em; }
 .filtro { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
 .filtro label { flex-basis: 100%; }
+.filtro label, .filtro select { min-width: 0; max-width: 100%; }
+.cabecalho, h1 { overflow-wrap: anywhere; }
 .filtro input { flex: 1 1 12rem; max-width: 22rem; min-width: 0; }
 .acesso { min-height: 100dvh; display: grid; place-items: center; padding: 1rem; background: var(--fundo); border-top: .5rem solid var(--azul-institucional); }
 .entrada { width: min(100%, 420px); padding: 1.75rem; display: grid; gap: .75rem; }
 .entrada p, .entrada h1 { margin: 0; }
 .entrada label { margin-top: .5rem; font-weight: 650; }
+.campo-senha { display: grid; align-items: center; }
+.campo-senha > * { grid-area: 1 / 1; }
+.campo-senha input { width: 100%; min-height: 44px; padding-right: 3rem; }
+.campo-senha button { justify-self: end; display: grid; place-items: center; width: 44px; height: 42px; margin-right: 1px; border: 0; background: transparent; }
+.ajuda-senha summary { width: fit-content; color: var(--azul-institucional); cursor: pointer; text-decoration: underline; }
+.ajuda-senha p { padding-top: .5rem; }
 .primario { background: var(--azul-institucional); color: white; border-color: var(--azul-institucional); }
 .primario:hover { background: #204f78; }
 @media (max-width: 680px) {

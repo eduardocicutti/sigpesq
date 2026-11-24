@@ -47,7 +47,7 @@ export default function App() {
   const titulo = useRef(null)
   const campoBusca = useRef(null)
   const detalhe = /^\/projetos\/([^/]+)(?:\/(editar|situacao))?\/?$/.exec(rota)
-  const novo = rota === '/projetos/novo'
+  const novo = /^\/projetos\/novo\/?$/.test(rota)
   const projeto = detalhe && !novo ? obterProjetoDemonstracao(decodificar(detalhe[1])) : null
   const painel = rota === '/' || rota === '/login'
   const lista = rota === '/projetos' || rota === '/projetos/'
@@ -187,6 +187,7 @@ export default function App() {
   }
 
   async function solicitarExclusao() {
+    if (!window.confirm('Excluir o projeto “' + projeto.titulo + '”?')) return
     try {
       await excluirProjeto(perfil, projeto.codigo)
       navegar('/projetos')
@@ -206,12 +207,21 @@ export default function App() {
         <select id="perfil" value={selecionado} onChange={(evento) => { setSelecionado(evento.target.value); setErroLogin('') }}>
           {perfis.map((item) => <option key={item}>{item}</option>)}
         </select>
-        <p>Conta de demonstração: <strong>{logins[selecionado]}</strong> / <strong>sigpesq-demo</strong></p>
+        <p>Login de demonstração: <strong>{logins[selecionado]}</strong></p>
         <label htmlFor="login">Login</label>
-        <input id="login" name="login" autoComplete="username" value={login} onChange={(evento) => setLogin(evento.target.value)} required />
+        <input id="login" name="login" autoComplete="username" maxLength={40} value={login} onChange={(evento) => setLogin(evento.target.value)} required />
         <label htmlFor="senha">Senha</label>
-        <input id="senha" name="senha" type={senhaVisivel ? 'text' : 'password'} autoComplete="current-password" required />
-        <button type="button" aria-pressed={senhaVisivel} onClick={() => setSenhaVisivel((valor) => !valor)}>{senhaVisivel ? 'Ocultar senha' : 'Mostrar senha'}</button>
+        <div className="campo-senha">
+          <input id="senha" name="senha" type={senhaVisivel ? 'text' : 'password'} autoComplete="current-password" required />
+          <button type="button" aria-label={senhaVisivel ? 'Ocultar senha' : 'Mostrar senha'} aria-controls="senha" onClick={() => setSenhaVisivel((valor) => !valor)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+              <circle cx="12" cy="12" r="3" />
+              {senhaVisivel && <path d="m3 3 18 18" />}
+            </svg>
+          </button>
+        </div>
+        <details className="ajuda-senha"><summary>Esqueci minha senha</summary><p>Use <strong>sigpesq-demo</strong> para entrar com qualquer perfil de demonstração.</p></details>
         {erroLogin && <p role="alert">{erroLogin}</p>}
         <button className="primario">Entrar</button>
       </form>
@@ -223,7 +233,7 @@ export default function App() {
       <header className="topo">
         <button className="marca" onClick={() => navegar('/')}>SIGPesq</button>
         <span className="identidade">{perfil === 'Coordenador' ? docentes[idDocenteDemonstracao] + ' · ' : ''}{perfil} · Demonstração</span>
-        <button onClick={() => { navegar('/login'); setPerfil(''); setResultado(null); setResumo({}); setFiltros(filtrosIniciais); buscar(filtrosIniciais) }}>Sair</button>
+        <button onClick={() => { navegar('/login'); setPerfil(''); setLogin(''); setResultado(null); setResumo({}); setProjetosPainel([]); setFiltros(filtrosIniciais); setConsulta(filtrosIniciais); setNumeroPagina(1) }}>Sair</button>
       </header>
       <div className="estrutura">
         <nav aria-label="Navegação principal">
@@ -275,7 +285,7 @@ export default function App() {
                 {podeAlterarSituacao(perfil, projeto) && (
                   <button onClick={() => navegar(caminhoProjeto(projeto) + '/situacao')}>Alterar situação</button>
                 )}
-                {podeEditarProjeto(perfil, projeto) && <button onClick={solicitarExclusao}>Verificar exclusão</button>}
+                {podeEditarProjeto(perfil, projeto) && <button onClick={solicitarExclusao}>Excluir projeto</button>}
               </div>
               <dl className="cartao dados">
                 <div><dt>Código</dt><dd>{projeto.codigo}</dd></div>

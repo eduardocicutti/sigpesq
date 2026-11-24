@@ -8,11 +8,12 @@ export const situacoes = Object.freeze({
   CANCELADO: 'Cancelado',
 })
 
+let proximoIdProjeto = 1
 const projetos = [
   { codigo: 'PRJ-001', titulo: 'Qualidade da água no norte capixaba', descricao: 'Acompanhamento de indicadores de qualidade da água.', idCoordenador: 1, dataInicio: '2026-03-02', dataTermino: '2026-12-15', situacao: 'EM_ANDAMENTO' },
   { codigo: 'PRJ-002', titulo: 'Monitoramento da biodiversidade costeira', descricao: 'Inventário de espécies da zona costeira.', idCoordenador: 2, dataInicio: '2026-02-03', dataTermino: '2027-01-22', situacao: 'EM_ANDAMENTO' },
   { codigo: 'PRJ-003', titulo: 'Acervo digital de publicações científicas', descricao: 'Organização das publicações em um acervo digital.', idCoordenador: 1, dataInicio: '2026-04-06', dataTermino: '2026-10-30', situacao: 'CONCLUIDO' },
-]
+].map(projeto => ({ ...projeto, idProjeto: proximoIdProjeto++ }))
 export const pessoasDemonstracao = { ...docentes, 3: 'Marina Alves', 4: 'Rafael Pereira' }
 export const funcoesEquipe = Object.freeze({
   VICE_COORDENADOR: 'Vice-coordenador',
@@ -23,15 +24,17 @@ export const funcoesEquipe = Object.freeze({
   OUTRO: 'Outro',
 })
 
+let proximoIdParticipacao = 1
+
 function vinculoCoordenacao(idParticipante, dataEntrada) {
-  return { idParticipante, funcao: 'COORDENADOR', dataEntrada, dataSaida: null }
+  return { idParticipacao: proximoIdParticipacao++, idParticipante, funcao: 'COORDENADOR', dataEntrada, dataSaida: null }
 }
 
 const equipes = new Map(projetos.map((projeto) => [
   projeto.codigo,
   [vinculoCoordenacao(projeto.idCoordenador, projeto.dataInicio)],
 ]))
-equipes.get('PRJ-001').push({ idParticipante: 3, funcao: 'BOLSISTA', dataEntrada: '2026-03-05', dataSaida: '2026-08-31' })
+equipes.get('PRJ-001').push({ idParticipacao: proximoIdParticipacao++, idParticipante: 3, funcao: 'BOLSISTA', dataEntrada: '2026-03-05', dataSaida: '2026-08-31' })
 
 function apresentar(projeto) {
   return { ...projeto, coordenador: docentes[projeto.idCoordenador] }
@@ -70,7 +73,7 @@ export async function listarProjetos({ busca = '', situacao = '', idCoordenador 
 }
 
 export async function carregarTodosProjetos(filtros = {}) {
-  const { dados, paginacao } = await listarProjetos({ ...filtros, tamanho: 100 })
+  const { dados, paginacao } = await listarProjetos({ ...filtros, tamanho: 100, pagina: 1 })
   const paginas = Array.from({ length: Math.max(0, Math.ceil(paginacao.total / 100) - 1) }, (_, indice) => indice + 2)
   const adicionais = await Promise.all(paginas.map((pagina) => listarProjetos({ ...filtros, tamanho: 100, pagina })))
   return dados.concat(adicionais.flatMap((pagina) => pagina.dados))
@@ -94,7 +97,7 @@ export function listarProjetosDoParticipante(id) {
 }
 
 export function dataValida(valor) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(valor) || valor.startsWith('0000')) return false
+  if (typeof valor !== 'string' || !/^[1-9]\d{3}-\d{2}-\d{2}$/.test(valor)) return false
   const instante = new Date(valor + 'T00:00:00Z')
   return !Number.isNaN(instante.valueOf()) && instante.toISOString().slice(0, 10) === valor
 }
@@ -123,7 +126,7 @@ export async function criarProjeto(perfil, valores) {
   const idCoordenador = perfil === 'Administrador' ? Number(valores.idCoordenador) : idDocenteDemonstracao
   if (!Object.hasOwn(docentes, idCoordenador)) throw new Error('Selecione um docente coordenador.')
   if (!Object.hasOwn(situacoes, valores.situacao)) throw new Error('Selecione uma situação válida.')
-  const projeto = { codigo, ...dadosBasicos(valores), idCoordenador, situacao: valores.situacao }
+  const projeto = { codigo, ...dadosBasicos(valores), idCoordenador, situacao: valores.situacao, idProjeto: proximoIdProjeto++ }
   projetos.unshift(projeto)
   equipes.set(codigo, [vinculoCoordenacao(idCoordenador, projeto.dataInicio)])
   registrarOperacao(perfil, 'Inclusão', 'projeto', codigo, 'Projeto cadastrado com vínculo de coordenação.')
@@ -162,7 +165,7 @@ export async function vincularParticipante(perfil, codigo, valores) {
   if (equipe.some((item) => item.idParticipante === idParticipante && item.dataEntrada === dataEntrada)) {
     throw new Error('Já existe um vínculo para este participante na data de entrada.')
   }
-  equipe.push({ idParticipante, funcao, dataEntrada, dataSaida })
+  equipe.push({ idParticipacao: proximoIdParticipacao++, idParticipante, funcao, dataEntrada, dataSaida })
   registrarOperacao(perfil, 'Inclusão', 'participacao', [codigo, idParticipante, dataEntrada].join('/'), 'Participante vinculado ao projeto.')
 }
 

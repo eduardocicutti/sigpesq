@@ -144,6 +144,7 @@ export function salvarProducao(perfil, id, campos) {
   const projetos = [...new Set(campos.projetos)]
   if (!projetos.length || !podeManterProducao(perfil, { projetos })) throw new Error('Selecione pelo menos um projeto sob sua coordenação.')
   const ids = campos.autores.map(Number)
+  if (ids.length > 255) throw new Error('Cada produção pode ter até 255 autores.')
   if (!ids.length || new Set(ids).size !== ids.length || !ids.every((autor) => Object.hasOwn(pessoasDemonstracao, autor))) {
     throw new Error('Selecione pelo menos um autor cadastrado, sem repetição.')
   }

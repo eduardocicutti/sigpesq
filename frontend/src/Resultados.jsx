@@ -276,5 +276,5 @@ function Opcoes({ itens }) {
 }
 
 function CampoValor({ nome, rotulo, valor }) {
-  return <label className="projeto-form__campo">{rotulo}<input name={nome} inputMode="decimal" maxLength={16} defaultValue={valor?.replace('.', ',')} required /></label>
+  return <label className="projeto-form__campo">{rotulo}<input name={nome} inputMode="decimal" pattern="(?!0+([.,]0+)?$)[0-9]{1,13}([.,][0-9]{1,2})?" maxLength={16} title="Informe um valor positivo com até duas casas decimais, por exemplo 250,50." defaultValue={valor?.replace('.', ',')} required /></label>
 }

@@ -31,10 +31,11 @@ export function salvarCadastro(modulo, perfil, id, dados) {
     const sigla = dados.sigla.trim().toUpperCase()
     if (!sigla || sigla.length > 15) throw new Error('Informe uma sigla de até 15 caracteres.')
     if (agencias.some((item) => item.sigla === sigla && item.id !== id)) throw new Error('Esta sigla já está cadastrada.')
-    atualizarLista(agencias, id, proximaAgencia, { nome, sigla })
-    if (!id) proximaAgencia++
-    registrarOperacao(perfil, id ? 'Alteração' : 'Inclusão', 'agencia_financiadora', id ?? proximaAgencia - 1, 'Cadastro de agência salvo.')
-    return id ?? proximaAgencia - 1
+    const agenciaId = id ?? proximaAgencia
+    atualizarLista(agencias, id, agenciaId, { nome, sigla })
+    if (id === null) proximaAgencia++
+    registrarOperacao(perfil, id === null ? 'Inclusão' : 'Alteração', 'agencia_financiadora', agenciaId, 'Cadastro de agência salvo.')
+    return agenciaId
   }
 
   const cpf = dados.cpf.replace(/[.\s-]/g, '')

@@ -5,6 +5,7 @@ import './projetos-form.css'
 export default function ProjetoForm({ modo, perfil, projeto, salvar, cancelar }) {
   const [erro, setErro] = useState('')
   const [salvando, setSalvando] = useState(false)
+  const [inicio, setInicio] = useState(projeto?.dataInicio ?? '')
   const operacaoAtiva = useRef(false)
   const novo = modo === 'novo'
   const apenasSituacao = modo === 'situacao'
@@ -46,11 +47,11 @@ export default function ProjetoForm({ modo, perfil, projeto, salvar, cancelar })
             </label>
             <label className="projeto-form__campo">
               Início
-              <input type="date" name="dataInicio" required defaultValue={projeto?.dataInicio} />
+              <input type="date" name="dataInicio" required value={inicio} onChange={(evento) => setInicio(evento.target.value)} />
             </label>
             <label className="projeto-form__campo">
               Término
-              <input type="date" name="dataTermino" required defaultValue={projeto?.dataTermino} />
+              <input type="date" name="dataTermino" required min={inicio || undefined} defaultValue={projeto?.dataTermino} />
             </label>
             <label className="projeto-form__campo">
               Coordenação
