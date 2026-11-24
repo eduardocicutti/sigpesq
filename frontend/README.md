@@ -1,9 +1,21 @@
 ﻿# Frontend SIGPesq
 
-React e JavaScript com Vite. Execute na pasta frontend:
+Interface em React e JavaScript. O Vite deste projeto requer Node.js 20.19 ou posterior da série 20, ou Node.js 22.12 ou superior.
+
+No Linux Mint, a partir da raiz do repositório clonado:
+
+```bash
+cd frontend
+npm ci --include=dev
+npm run dev
+```
+
+Abra o endereço indicado em `Local` e mantenha o terminal aberto. Se aparecer `vite: not found`, confira a versão com `node --version` e a saída do comando de instalação.
+
+No Windows PowerShell, dentro de `frontend`:
 
 ```powershell
-npm.cmd install
+npm.cmd ci --include=dev
 npm.cmd run dev
 ```
 
@@ -21,4 +33,4 @@ Consultas e relatórios respeitam o perfil. O painel exibe projetos próximos do
 
 As alterações da demonstração ficam em memória e são descartadas ao recarregar a página. O contrato da API é um documento interno em `../docs/planejamento/02-CONTRATO-API-INICIAL.md`. Essa pasta fica fora do versionamento. A integração com o MySQL depende da validação do esquema, da sessão e das permissões no servidor.
 
-A revisão visual da aplicação continua pendente.
+Para testar os serviços, execute `node --test`. Com Firefox instalado, execute `node teste-navegador.mjs` na pasta frontend para verificar login, navegação por perfil, largura das páginas, controle da senha pelo teclado, cadastro de projeto e acesso à auditoria. O teste usa dados em memória e as larguras de 360, 768 e 1440 px.
