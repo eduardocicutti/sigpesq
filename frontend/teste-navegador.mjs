@@ -57,6 +57,19 @@ try {
       }
       console.log(perfil,width,count,'destinos')
       const route=async path=>evaluate(`history.pushState(null,'',${JSON.stringify(path)});dispatchEvent(new PopStateEvent('popstate'))`)
+      if(perfil==='Administrador'){
+        await route('/financiamentos/novo')
+        await evaluate("document.querySelector('[name=valorTotal]').focus()")
+        const actions = [...'abc23,45x6'].flatMap(value => [
+          {type:'keyDown',value}, {type:'keyUp',value},
+        ])
+        await call('input.performActions',{context,actions:[{type:'key',id:'valor',actions}]})
+        assert.equal(await evaluate("document.activeElement.value"),'23,45')
+        await evaluate(`const campo=document.activeElement
+          Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(campo,'asdfasrd23qw423')
+          campo.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertFromPaste'}))`)
+        assert.equal(await evaluate("document.activeElement.value"),'23,45')
+      }
       if(perfil==='Administrador' || perfil==='Coordenador'){
         await route('/projetos/novo')
         assert.equal(await evaluate("document.querySelector('form').checkValidity()"),false)

@@ -1,3 +1,4 @@
+import { CampoAno } from './Campos.jsx'
 import { useState } from 'react'
 import { moeda } from './formatadores.js'
 import { listarAuditoria } from './services/auditoria.js'
@@ -58,9 +59,9 @@ export default function Consultas({ perfil, projetos, formatarData }) {
         </label>
         {consulta === 'RF13' && <Filtro nome="idCoordenador" rotulo="Coordenação" itens={Object.entries(docentes)} />}
         {['RF14', 'RF15'].includes(consulta) && <Filtro nome="codigoProjeto" rotulo="Projeto" itens={projetos.map((item) => [item.codigo, item.titulo])} />}
-        {consulta === 'RF16' && <Filtro nome="idAgencia" rotulo="Agência" itens={agencias.map((item) => [item.id, item.sigla + ' — ' + item.nome])} />}
+        {consulta === 'RF16' && <Filtro nome="idAgencia" rotulo="Agência" itens={agencias.map((item) => [item.id, item.sigla + ' (' + item.nome + ')'])} />}
         {consulta === 'RF18' && <>
-          <label className="projeto-form__campo">Ano de publicação<input type="number" name="ano" min="1" max="65535" /></label>
+          <label className="projeto-form__campo">Ano de publicação<CampoAno name="ano" /></label>
           <Filtro nome="tipo" rotulo="Tipo" itens={Object.entries(tiposProducao)} obrigatorio={false} />
         </>}
         {consulta === 'RF20' && <Filtro nome="recorte" rotulo="Período de participação" itens={[[ 'ativo', 'Vínculos vigentes' ], [ 'historico', 'Todo o histórico' ]]} defaultValue="ativo" />}

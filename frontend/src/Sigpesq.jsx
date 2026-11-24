@@ -330,7 +330,7 @@ export default function App() {
                 <p><button className="primario" onClick={() => navegar('/projetos/novo')}>Novo projeto</button></p>
               )}
               {painel && <div className="resumo">
-                {['Em andamento', 'Concluído'].map((situacao) => <div key={situacao}><span>{situacao === 'Concluído' ? 'Concluídos' : situacao}</span><strong>{resumo[situacao] ?? '—'}</strong></div>)}
+                {['Em andamento', 'Concluído'].map((situacao) => <div key={situacao}><span>{situacao === 'Concluído' ? 'Concluídos' : situacao}</span><strong>{resumo[situacao] ?? 'Indisponível'}</strong></div>)}
               </div>}
               {painel && (
                 <PainelComplementar perfil={perfil} projetos={projetosPainel} navegar={navegar} abrirProjeto={abrirProjeto}

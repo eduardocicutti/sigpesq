@@ -1,3 +1,4 @@
+import { CampoAno } from './Campos.jsx'
 import { useEffect, useState } from 'react'
 import { moeda } from './formatadores.js'
 import { listarCadastros } from './services/cadastros.js'
@@ -78,8 +79,8 @@ export default function Resultados({ modulo, perfil, rota, navegar, formatarData
           <SeletorAgencia agencias={agencias} valor={item?.idAgencia} obrigatorio />
           <Seletor rotulo="Tipo de fomento" nome="tipoFomento" opcoes={tiposFomento} valor={item?.tipoFomento} />
           <CampoValor nome="valorTotal" rotulo="Valor total (R$)" valor={item?.valorTotal} />
-          <label className="projeto-form__campo">Início da vigência<input type="date" name="dataInicioVigencia" defaultValue={item?.dataInicioVigencia} required /></label>
-          <label className="projeto-form__campo">Fim da vigência<input type="date" name="dataFimVigencia" defaultValue={item?.dataFimVigencia} required /></label>
+          <label className="projeto-form__campo">Início da vigência<input type="date" min="1000-01-01" max="9999-12-31" name="dataInicioVigencia" onChange={({ target }) => { target.form.elements.dataFimVigencia.min = target.value || '1000-01-01' }} defaultValue={item?.dataInicioVigencia} required /></label>
+          <label className="projeto-form__campo">Fim da vigência<input type="date" min={item?.dataInicioVigencia ?? '1000-01-01'} max="9999-12-31" name="dataFimVigencia" defaultValue={item?.dataFimVigencia} required /></label>
         </Formulario>
       ) : erroProjetos ? (
         <section className="cartao"><p role="alert">Não foi possível carregar os projetos.</p><button onClick={() => { setErroProjetos(false); setVersao((v) => v + 1) }}>Tentar novamente</button></section>
@@ -153,7 +154,7 @@ export default function Resultados({ modulo, perfil, rota, navegar, formatarData
     {podeManter && <p><button className="primario" onClick={() => navegar(raiz + '/' + novo)}>{financiamento ? 'Novo financiamento' : 'Nova produção'}</button></p>}
     <div className="filtro">
       {financiamento ? <SeletorAgencia agencias={agencias} valor={idAgencia} alterar={setIdAgencia} /> : <>
-        <label>Ano de publicação <input type="number" min="1" max="65535" value={ano} onChange={(evento) => setAno(evento.target.value)} /></label>
+        <label>Ano de publicação <CampoAno value={ano} alterar={setAno} /></label>
         <label>Tipo <select value={tipo} onChange={(evento) => setTipo(evento.target.value)}><option value="">Todos</option><Opcoes itens={tiposProducao} /></select></label>
       </>}
       {(idAgencia || ano || tipo) && <button onClick={() => { setIdAgencia(''); setAno(''); setTipo('') }}>Limpar filtros</button>}
@@ -175,20 +176,21 @@ export default function Resultados({ modulo, perfil, rota, navegar, formatarData
 
 function Formulario({ salvar, cancelar, children, rotuloSalvar = 'Salvar', resetar = false }) {
   const [erro, setErro] = useState('')
+  const [versao, setVersao] = useState(0)
   function enviar(evento) {
     evento.preventDefault()
     const formulario = evento.currentTarget
     try {
       salvar(Object.fromEntries(new FormData(formulario)))
       setErro('')
-      if (resetar) formulario.reset()
+      if (resetar) setVersao(v => v + 1)
     } catch (falha) {
       setErro(falha.message)
     }
   }
   return <form className="projeto-form" onSubmit={enviar}>
     {erro && <p role="alert" className="projeto-form__erro">{erro}</p>}
-    <div className="projeto-form__campos">{children}</div>
+    <div key={versao} className="projeto-form__campos">{children}</div>
     <div className="projeto-form__acoes">
       {cancelar && <button type="button" onClick={cancelar}>Cancelar</button>}
       <button className="primario">{rotuloSalvar}</button>
@@ -213,7 +215,7 @@ function FormularioProducao({ item, projetos, salvar, cancelar }) {
   return <Formulario salvar={(campos) => salvar({ ...campos, autores, projetos: selecionados })} cancelar={cancelar}>
     <label className="projeto-form__campo projeto-form__campo--largo">Título<input name="titulo" maxLength={250} defaultValue={item?.titulo} required /></label>
     <Seletor rotulo="Tipo" nome="tipo" opcoes={tiposProducao} valor={item?.tipo} />
-    <label className="projeto-form__campo">Ano de publicação<input type="number" name="anoPublicacao" min="1" max="65535" defaultValue={item?.anoPublicacao} required /></label>
+    <label className="projeto-form__campo">Ano de publicação<CampoAno name="anoPublicacao" inicial={item?.anoPublicacao} required /></label>
     <label className="projeto-form__campo projeto-form__campo--largo">Meio de divulgação<input name="meioDivulgacao" maxLength={200} defaultValue={item?.meioDivulgacao} required /></label>
     <fieldset className="projeto-form__campo--largo"><legend>Projetos vinculados</legend>
       {projetos.length ? projetos.map((projeto) => <label className="opcao-projeto" key={projeto.codigo}>
@@ -260,7 +262,7 @@ function SeletorAgencia({ agencias, valor, alterar, obrigatorio = false }) {
   return <label className="projeto-form__campo">Agência
     <select name="idAgencia" value={alterar ? valor : undefined} defaultValue={alterar ? undefined : valor ?? ''} onChange={alterar ? (evento) => alterar(evento.target.value) : undefined} required={obrigatorio}>
       <option value="">{obrigatorio ? 'Selecione' : 'Todas'}</option>
-      {agencias.map((agencia) => <option key={agencia.id} value={agencia.id}>{agencia.sigla} — {agencia.nome}</option>)}
+      {agencias.map((agencia) => <option key={agencia.id} value={agencia.id}>{agencia.sigla} ({agencia.nome})</option>)}
     </select>
   </label>
 }
@@ -276,5 +278,13 @@ function Opcoes({ itens }) {
 }
 
 function CampoValor({ nome, rotulo, valor }) {
-  return <label className="projeto-form__campo">{rotulo}<input name={nome} inputMode="decimal" pattern="(?!0+([.,]0+)?$)[0-9]{1,13}([.,][0-9]{1,2})?" maxLength={16} title="Informe um valor positivo com até duas casas decimais, por exemplo 250,50." defaultValue={valor?.replace('.', ',')} required /></label>
+  const [texto, setTexto] = useState(valor?.replace('.', ',') ?? '')
+  return <label className="projeto-form__campo">{rotulo}
+    <input name={nome} inputMode="decimal" value={texto} required
+      pattern="(?!0+([.,]0+)?$)[0-9]{1,13}([.,][0-9]{1,2})?"
+      title="Informe um valor positivo com até duas casas decimais, por exemplo 250,50."
+      onChange={({ target }) => {
+        if (/^(?:[0-9]{1,13}(?:[.,][0-9]{0,2})?)?$/.test(target.value)) setTexto(target.value)
+      }} />
+  </label>
 }

@@ -47,11 +47,11 @@ export default function ProjetoForm({ modo, perfil, projeto, salvar, cancelar })
             </label>
             <label className="projeto-form__campo">
               Início
-              <input type="date" name="dataInicio" required value={inicio} onChange={(evento) => setInicio(evento.target.value)} />
+              <input type="date" min="1000-01-01" max="9999-12-31" name="dataInicio" required value={inicio} onChange={(evento) => setInicio(evento.target.value)} />
             </label>
             <label className="projeto-form__campo">
               Término
-              <input type="date" name="dataTermino" required min={inicio || undefined} defaultValue={projeto?.dataTermino} />
+              <input type="date" max="9999-12-31" name="dataTermino" required min={inicio || '1000-01-01'} defaultValue={projeto?.dataTermino} />
             </label>
             <label className="projeto-form__campo">
               Coordenação

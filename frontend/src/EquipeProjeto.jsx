@@ -80,14 +80,14 @@ export default function EquipeProjeto({ perfil, projeto, formatarData, atualizar
                     {Object.entries(funcoesEquipe).map(([id, nome]) => <option value={id} key={id}>{nome}</option>)}
                   </select>
                 </label>
-                <label className="projeto-form__campo">Entrada<input name="dataEntrada" type="date" required /></label>
+                <label className="projeto-form__campo">Entrada<input name="dataEntrada" onChange={({ target }) => { target.form.elements.dataSaida.min = target.value || '1000-01-01' }} type="date" min="1000-01-01" max="9999-12-31" required /></label>
               </>
             )}
             {formulario === 'encerrar' && <p className="projeto-form__campo--largo">Encerrar vínculo de {pessoasDemonstracao[terminando.idParticipante]}.</p>}
             {formulario !== 'troca' && (
               <label className="projeto-form__campo">
                 {formulario === 'encerrar' ? 'Saída' : 'Saída (opcional)'}
-                <input name="dataSaida" type="date" required={formulario === 'encerrar'} min={terminando?.dataEntrada} />
+                <input name="dataSaida" type="date" max="9999-12-31" required={formulario === 'encerrar'} min={terminando?.dataEntrada ?? '1000-01-01'} />
               </label>
             )}
           </div>

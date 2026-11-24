@@ -1,3 +1,4 @@
+import { CampoCpf } from './Campos.jsx'
 import { useState } from 'react'
 import { excluirParticipante, listarCadastros, salvarCadastro, tiposPessoa } from './services/cadastros.js'
 import { listarProjetosDoParticipante } from './services/projetos.js'
@@ -49,7 +50,7 @@ export default function Cadastros({ modulo, perfil, rota, navegar, formatarData 
         ) : (
           <>
             <label className="projeto-form__campo projeto-form__campo--largo">E-mail institucional<input name="emailInstitucional" type="email" maxLength={120} defaultValue={item?.emailInstitucional} required /></label>
-            <label className="projeto-form__campo">CPF<input name="cpf" inputMode="numeric" pattern="[0-9]{11}|[0-9]{3}[.][0-9]{3}[.][0-9]{3}-[0-9]{2}" maxLength={14} title="Informe os 11 dígitos, com ou sem pontuação." defaultValue={item?.cpf} required /></label>
+            <label className="projeto-form__campo">CPF<CampoCpf key={id ?? "novo"} inicial={item?.cpf} /></label>
             <label className="projeto-form__campo">Tipo
               <select name="tipo" defaultValue={item?.tipo ?? ''} required>
                 <option value="">Selecione</option>
