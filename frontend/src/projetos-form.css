@@ -1,23 +1,29 @@
-.projeto-form {
+/* Formulários de cadastro e edição. Cores e medidas vêm dos tokens de sigpesq.css. */
+form.projeto-form {
   max-width: 52rem;
-  padding: clamp(1rem, 3vw, 1.75rem);
-  background: white;
-  border: 1px solid var(--linha, #dce6ef);
-  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-painel);
+  background: var(--cor-superficie);
 }
+form.projeto-form > * + * { margin-top: 1.25rem; }
 
 .projeto-form .projeto-form__campos {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem 1.25rem;
+  gap: 1.125rem 1.25rem;
 }
+.projeto-form .projeto-form__campos > * { margin-top: 0; }
 
+/* O texto do rótulo fica direto no <label>, com o campo logo abaixo. */
 .projeto-form .projeto-form__campo {
   display: grid;
   align-content: start;
-  gap: .4rem;
+  gap: .375rem;
   min-width: 0;
-  font-weight: 600;
+  color: var(--cor-texto);
+  font-size: .8125rem;
+  font-weight: 500;
 }
 
 .projeto-form .projeto-form__campo--largo,
@@ -25,62 +31,70 @@
   grid-column: 1 / -1;
 }
 
-.projeto-form :is(input, select, textarea) {
-  width: 100%;
+.projeto-form :is(input, select, textarea) { font-weight: 400; }
+.projeto-form textarea { min-height: 6.5rem; resize: vertical; }
+
+.projeto-form fieldset {
+  display: grid;
+  gap: .75rem;
   min-width: 0;
-  min-height: 2.75rem;
-  padding: .55rem .8rem;
-  border: 1px solid #839cb2;
-  border-radius: 7px;
-  background: white;
-  color: inherit;
-  font: inherit;
-  font-weight: 400;
+  margin: 0;
+  padding: 1rem 1.125rem 1.125rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-painel);
 }
+.projeto-form legend { padding: 0 .375rem; margin-left: -.375rem; font-size: .8125rem; font-weight: 600; }
+.projeto-form fieldset > label:not(.opcao-projeto) { display: grid; gap: .375rem; max-width: 24rem; font-size: .8125rem; font-weight: 500; }
+.projeto-form fieldset > p { color: var(--cor-texto-fraco); font-size: .875rem; }
 
-.projeto-form textarea {
-  min-height: 6.5rem;
-  resize: vertical;
+.projeto-form .opcao-projeto { display: flex; align-items: center; gap: .625rem; padding: .125rem 0; font-size: .875rem; cursor: pointer; }
+
+/* Lista de autores com botões de ordem */
+.projeto-form fieldset ol { display: grid; gap: .375rem; padding: 0; list-style: none; counter-reset: autor; }
+.projeto-form fieldset ol > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .375rem .375rem .375rem .75rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-controle);
+  background: var(--cor-superficie-suave);
+  font-size: .875rem;
+  counter-increment: autor;
 }
-
-.projeto-form fieldset { min-width: 0; border: 1px solid #839cb2; border-radius: 7px; }
-.projeto-form .opcao-projeto { display: flex; align-items: center; gap: .5rem; padding: .4rem 0; }
-.projeto-form .opcao-projeto input { width: auto; min-height: auto; }
-
-.projeto-form :is(input, select, textarea):is([readonly], :disabled) {
-  background: #eef4f9;
-  color: #405a74;
-}
-
-.projeto-form [aria-invalid="true"] {
-  border-color: #a02732;
-}
-
-.projeto-form .projeto-form__erro {
-  padding: .75rem 1rem;
-  border-inline-start: 3px solid #a02732;
-  border-radius: 4px;
-  background: #fff1f2;
-  color: #8c2431;
-  font-weight: 500;
-  overflow-wrap: anywhere;
-}
+.projeto-form fieldset ol > li > span::before { content: counter(autor) '.'; margin-right: .5rem; color: var(--cor-texto-fraco); font-family: var(--fonte-mono); font-size: .75rem; }
+.projeto-form fieldset ol .acoes { gap: .25rem; }
+.projeto-form fieldset ol button { min-height: 1.875rem; padding: 0 .6rem; font-size: .8125rem; }
 
 .projeto-form .projeto-form__acoes {
   display: flex;
   flex-wrap: wrap;
-  gap: .75rem;
-  margin-top: 1.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--linha, #dce6ef);
+  justify-content: flex-end;
+  gap: .5rem;
+  margin-inline: -1.5rem;
+  margin-bottom: -1.5rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--cor-borda);
+  border-radius: 0 0 var(--raio-painel) var(--raio-painel);
+  background: var(--cor-superficie-suave);
 }
 
-.projeto-form .projeto-form__acoes button {
-  min-height: 2.75rem;
-}
+/* Formulário dentro de outro painel: sem borda própria, para não virar painel dentro de painel. */
+.cartao form.projeto-form:not(.cartao) { max-width: none; padding: 0; border: 0; background: transparent; }
+.cartao form.projeto-form:not(.cartao) .projeto-form__acoes { justify-content: flex-start; margin: 1rem 0 0; padding: 0; border: 0; background: transparent; }
+/* Logo abaixo de uma tabela, o formulário ganha uma divisória de ponta a ponta. */
+.cartao > .tabela + form.projeto-form:not(.cartao) { margin-inline: -1.25rem; padding: 1.25rem 1.25rem 0; border-top: 1px solid var(--cor-borda); border-radius: 0; }
+.cartao form.cartao.projeto-form { max-width: none; background: var(--cor-superficie-suave); }
+.cartao form.cartao.projeto-form .projeto-form__acoes { background: transparent; }
 
 @media (max-width: 840px) {
-  .projeto-form .projeto-form__campos {
-    grid-template-columns: minmax(0, 1fr);
-  }
+  .projeto-form .projeto-form__campos { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 600px) {
+  form.projeto-form { padding: 1rem; }
+  .projeto-form .projeto-form__acoes { margin-inline: -1rem; margin-bottom: -1rem; padding: .875rem 1rem; }
+  .cartao > .tabela + form.projeto-form:not(.cartao) { margin-inline: -1rem; padding-inline: 1rem; }
 }

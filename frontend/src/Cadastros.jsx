@@ -1,5 +1,6 @@
 import { CampoCpf } from './Campos.jsx'
 import { useState } from 'react'
+import { IconArrowLeft, IconPencil, IconPlus, IconSearch, IconTrash } from '@tabler/icons-react'
 import { excluirParticipante, listarCadastros, salvarCadastro, tiposPessoa } from './services/cadastros.js'
 import { listarProjetosDoParticipante } from './services/projetos.js'
 import { listarProducoes } from './services/resultados.js'
@@ -39,9 +40,10 @@ export default function Cadastros({ modulo, perfil, rota, navegar, formatarData 
   }
 
   if (id !== null && !item) return <section className="cartao"><p role="status">Cadastro não encontrado.</p><button onClick={() => navegar(caminho)}>Voltar</button></section>
-  if (modo !== 'consulta' && !adm) return <section className="cartao"><p role="alert">Seu perfil não pode manter este cadastro.</p><button onClick={() => navegar(caminho)}>Voltar</button></section>
+  if (modo !== 'consulta' && !adm) return <section className="cartao"><p role="alert" className="aviso aviso--erro">Seu perfil não pode manter este cadastro.</p><button onClick={() => navegar(caminho)}>Voltar</button></section>
   if (modo !== 'consulta') return (
     <form className="cartao projeto-form" onSubmit={enviar}>
+      <h2>{modo === 'novo' ? (agencia ? 'Nova agência' : 'Novo participante') : 'Editar ' + (agencia ? 'agência' : 'participante')}</h2>
       {erro && <p role="alert" className="projeto-form__erro">{erro}</p>}
       <div className="projeto-form__campos">
         <label className="projeto-form__campo projeto-form__campo--largo">Nome<input name="nome" maxLength={150} defaultValue={item?.nome} required /></label>
@@ -72,13 +74,15 @@ export default function Cadastros({ modulo, perfil, rota, navegar, formatarData 
     const producoes = listarProducoes({ idParticipante: item.id })
     return (
       <>
-        <h2>{item.nome}</h2>
-        <div className="abas">
-          <button onClick={() => navegar(caminho)}>Voltar à lista</button>
-          {adm && <button className="primario" onClick={() => navegar(caminho + '/' + item.id + '/editar')}>Editar</button>}
-          {adm && !confirmando && <button onClick={() => setConfirmando(true)}>Excluir</button>}
+        <div className="acoes">
+          <button className="fantasma" onClick={() => navegar(caminho)}><IconArrowLeft size={16} stroke={1.8} aria-hidden="true" />Voltar à lista</button>
+          <div className="acoes__fim">
+            {adm && !confirmando && <button className="perigo" onClick={() => setConfirmando(true)}><IconTrash size={16} stroke={1.8} aria-hidden="true" />Excluir</button>}
+            {adm && <button className="primario" onClick={() => navegar(caminho + '/' + item.id + '/editar')}><IconPencil size={16} stroke={1.8} aria-hidden="true" />Editar</button>}
+          </div>
         </div>
-        {confirmando && <p>Excluir este participante? <button onClick={excluir}>Confirmar exclusão</button> <button onClick={() => setConfirmando(false)}>Cancelar</button></p>}
+        <h2 className="registro__titulo">{item.nome}</h2>
+        {confirmando && <div className="aviso aviso--alerta"><p>Excluir este participante?</p><button className="perigo" onClick={excluir}>Confirmar exclusão</button><button onClick={() => setConfirmando(false)}>Cancelar</button></div>}
         {erro && <p role="alert" className="projeto-form__erro">{erro}</p>}
         <dl className="cartao dados">
           <div><dt>Tipo</dt><dd>{tiposPessoa[item.tipo]}</dd></div>
@@ -88,21 +92,21 @@ export default function Cadastros({ modulo, perfil, rota, navegar, formatarData 
         <section className="cartao">
           <h2>Participação em projetos</h2>
           {projetos.length ? (
-            <ul>{projetos.map((projeto) => (
+            <ul className="lista">{projetos.map((projeto) => (
               <li key={projeto.codigo}>
                 <button className="link" onClick={() => navegar('/projetos/' + encodeURIComponent(projeto.codigo))}>{projeto.titulo}</button>
-                <ul>{projeto.vinculos.map((vinculo) => (
-                  <li key={vinculo.dataEntrada}>{formatarData(vinculo.dataEntrada)} · {vinculo.dataSaida ? formatarData(vinculo.dataSaida) : 'Ativo'}</li>
+                <ul className="lista__sub">{projeto.vinculos.map((vinculo) => (
+                  <li key={vinculo.dataEntrada} className="data">{formatarData(vinculo.dataEntrada)} · {vinculo.dataSaida ? formatarData(vinculo.dataSaida) : 'Ativo'}</li>
                 ))}</ul>
               </li>
             ))}</ul>
-          ) : <p>Nenhuma participação registrada.</p>}
+          ) : <p className="vazio">Nenhuma participação registrada.</p>}
         </section>
         <section className="cartao">
           <h2>Produções vinculadas</h2>
-          {producoes.length ? <ul>{producoes.map((producao) => (
+          {producoes.length ? <ul className="lista">{producoes.map((producao) => (
             <li key={producao.id}><button className="link" onClick={() => navegar('/producoes/' + producao.id)}>{producao.titulo}</button></li>
-          ))}</ul> : <p>Nenhuma produção vinculada.</p>}
+          ))}</ul> : <p className="vazio">Nenhuma produção vinculada.</p>}
         </section>
       </>
     )
@@ -115,17 +119,24 @@ export default function Cadastros({ modulo, perfil, rota, navegar, formatarData 
   )
   return (
     <section className="cartao">
-      {adm && <p><button className="primario" onClick={() => navegar(caminho + '/novo')}>{agencia ? 'Nova agência' : 'Novo participante'}</button></p>}
-      <div className="filtro">
-        <label htmlFor="buscar-cadastro">{agencia ? 'Nome ou sigla' : 'Nome ou e-mail'}</label>
-        <input id="buscar-cadastro" type="search" value={termo} onChange={(evento) => setTermo(evento.target.value)} />
-        {!agencia && <>
-          <label htmlFor="tipo-cadastro">Tipo</label>
-          <select id="tipo-cadastro" value={tipo} onChange={(evento) => setTipo(evento.target.value)}>
-            <option value="">Todos</option>
-            {Object.entries(tiposPessoa).map(([valor, rotulo]) => <option key={valor} value={valor}>{rotulo}</option>)}
-          </select>
-        </>}
+      <div className="barra-lista">
+        <div className="filtro">
+          <div className="campo campo--busca">
+            <label htmlFor="buscar-cadastro">{agencia ? 'Nome ou sigla' : 'Nome ou e-mail'}</label>
+            <span className="busca">
+              <IconSearch size={16} stroke={1.8} aria-hidden="true" />
+              <input id="buscar-cadastro" type="search" value={termo} onChange={(evento) => setTermo(evento.target.value)} />
+            </span>
+          </div>
+          {!agencia && <div className="campo">
+            <label htmlFor="tipo-cadastro">Tipo</label>
+            <select id="tipo-cadastro" value={tipo} onChange={(evento) => setTipo(evento.target.value)}>
+              <option value="">Todos</option>
+              {Object.entries(tiposPessoa).map(([valor, rotulo]) => <option key={valor} value={valor}>{rotulo}</option>)}
+            </select>
+          </div>}
+        </div>
+        {adm && <button className="primario" onClick={() => navegar(caminho + '/novo')}><IconPlus size={16} stroke={2} aria-hidden="true" />{agencia ? 'Nova agência' : 'Novo participante'}</button>}
       </div>
       {encontrados.length ? (
         <div className="tabela" role="region" aria-label={agencia ? 'Tabela de agências' : 'Tabela de participantes'} tabIndex={0}>
@@ -141,7 +152,7 @@ export default function Cadastros({ modulo, perfil, rota, navegar, formatarData 
             ))}</tbody>
           </table>
         </div>
-      ) : <p role="status">Nenhum cadastro corresponde à busca.</p>}
+      ) : <p role="status" className="vazio">Nenhum cadastro corresponde à busca.</p>}
     </section>
   )
 }

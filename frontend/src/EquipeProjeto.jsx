@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { IconArrowsExchange, IconUserPlus } from '@tabler/icons-react'
 import {
   docentes, encerrarVinculo, funcoesEquipe, obterEquipeProjeto, pessoasDemonstracao,
   podeAlterarSituacao, trocarCoordenacao, vincularParticipante,
@@ -33,10 +34,12 @@ export default function EquipeProjeto({ perfil, projeto, formatarData, atualizar
 
   return (
     <>
-      <h2>Equipe e histórico</h2>
-      <div className="abas">
-        {podeManter && <button onClick={() => abrir('vinculo')}>Vincular participante</button>}
-        {perfil === 'Administrador' && <button onClick={() => abrir('troca')}>Trocar coordenação</button>}
+      <div className="cartao__cabecalho">
+        <h2>Equipe e histórico</h2>
+        <div className="acoes">
+          {podeManter && <button onClick={() => abrir('vinculo')}><IconUserPlus size={16} stroke={1.8} aria-hidden="true" />Vincular participante</button>}
+          {perfil === 'Administrador' && <button onClick={() => abrir('troca')}><IconArrowsExchange size={16} stroke={1.8} aria-hidden="true" />Trocar coordenação</button>}
+        </div>
       </div>
       <div className="tabela" tabIndex={0} role="region" aria-label="Histórico da equipe">
         <table>
@@ -45,8 +48,8 @@ export default function EquipeProjeto({ perfil, projeto, formatarData, atualizar
             <tr key={item.idParticipante + '/' + item.dataEntrada}>
               <td>{pessoasDemonstracao[item.idParticipante]}</td>
               <td>{item.funcao === 'COORDENADOR' ? 'Coordenador' : funcoesEquipe[item.funcao]}</td>
-              <td>{formatarData(item.dataEntrada)}</td>
-              <td>{item.dataSaida ? formatarData(item.dataSaida) : 'Ativo'}</td>
+              <td className="data">{formatarData(item.dataEntrada)}</td>
+              <td className="data">{item.dataSaida ? formatarData(item.dataSaida) : 'Ativo'}</td>
               {podeManter && <td>{!item.dataSaida && item.funcao !== 'COORDENADOR' && (
                 <button onClick={() => abrir('encerrar', item)} aria-label={`Encerrar vínculo de ${pessoasDemonstracao[item.idParticipante]}`}>Encerrar</button>
               )}</td>}
@@ -56,6 +59,7 @@ export default function EquipeProjeto({ perfil, projeto, formatarData, atualizar
       </div>
       {formulario && (
         <form key={formulario + (terminando?.idParticipante ?? '') + (terminando?.dataEntrada ?? '')} className="cartao projeto-form" onSubmit={enviar}>
+          <h2>{formulario === 'troca' ? 'Trocar coordenação' : formulario === 'vinculo' ? 'Vincular participante' : 'Encerrar vínculo'}</h2>
           {erro && <p role="alert" className="projeto-form__erro">{erro}</p>}
           <div className="projeto-form__campos">
             {formulario === 'troca' && (

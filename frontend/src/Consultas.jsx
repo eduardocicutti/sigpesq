@@ -69,16 +69,19 @@ export default function Consultas({ perfil, projetos, formatarData }) {
       <div className="projeto-form__acoes"><button className="primario" disabled={!consulta || carregando}>{carregando ? 'Consultando…' : 'Consultar'}</button></div>
     </form>
     <section className="cartao">
-      <h2>Resultado</h2>
-      {erro ? <p role="alert">{erro}</p> : carregando ? <p role="status">Carregando resultados…</p> : resultado ? (
-        resultado.linhas.length ? <TabelaPaginada nome={consultas[consulta]} {...resultado} /> : <p role="status">Nenhum registro corresponde aos filtros.</p>
-      ) : <p>Selecione uma consulta e informe os filtros aplicáveis.</p>}
+      <div className="cartao__cabecalho">
+        <h2>Resultado</h2>
+        {resultado?.linhas.length > 0 && <span className="cartao__nota">{resultado.linhas.length} {resultado.linhas.length === 1 ? 'registro' : 'registros'}</span>}
+      </div>
+      {erro ? <p role="alert" className="aviso aviso--erro">{erro}</p> : carregando ? <p role="status" className="carregando">Carregando resultados…</p> : resultado ? (
+        resultado.linhas.length ? <TabelaPaginada nome={consultas[consulta]} {...resultado} /> : <p role="status" className="vazio">Nenhum registro corresponde aos filtros.</p>
+      ) : <p className="vazio">Selecione uma consulta e informe os filtros aplicáveis.</p>}
     </section>
   </>
 }
 
 export function Auditoria({ perfil }) {
-  if (perfil !== 'Administrador') return <section className="cartao"><p role="alert">Acesso negado.</p></section>
+  if (perfil !== 'Administrador') return <section className="cartao"><p role="alert" className="aviso aviso--erro">Acesso negado.</p></section>
   return <section className="cartao">
     <TabelaAuditoria eventos={listarAuditoria(perfil)} />
   </section>
@@ -86,7 +89,7 @@ export function Auditoria({ perfil }) {
 
 function TabelaAuditoria({ eventos }) {
   const dataHora = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'medium', timeZone: 'America/Sao_Paulo' })
-  if (!eventos.length) return <p role="status">Nenhuma operação registrada nesta demonstração.</p>
+  if (!eventos.length) return <p role="status" className="vazio">Nenhuma operação registrada nesta demonstração.</p>
   return <TabelaPaginada nome="Operações registradas" colunas={['Data e hora', 'Usuário', 'Perfil', 'Operação', 'Tabela', 'Chave', 'Descrição']}
     linhas={eventos.map((item) => [
       dataHora.format(new Date(item.dataHora)), item.usuario, item.perfil, item.operacao, item.tabela, item.chave, item.descricao,

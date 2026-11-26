@@ -1,5 +1,6 @@
 import { CampoAno } from './Campos.jsx'
 import { useEffect, useState } from 'react'
+import { IconArrowDown, IconArrowLeft, IconArrowUp, IconPencil, IconPlus, IconTrash, IconX } from '@tabler/icons-react'
 import { moeda } from './formatadores.js'
 import { listarCadastros } from './services/cadastros.js'
 import { carregarTodosProjetos, idDocenteDemonstracao, obterProjetoDemonstracao } from './services/projetos.js'
@@ -66,7 +67,7 @@ export default function Resultados({ modulo, perfil, rota, navegar, formatarData
   }
 
   if (!acesso || (formulario && !podeManter)) {
-    return <section className="cartao"><p role="alert">Seu perfil não pode realizar esta operação.</p><button onClick={() => navegar('/')}>Voltar ao painel</button></section>
+    return <section className="cartao"><p role="alert" className="aviso aviso--erro">Seu perfil não pode realizar esta operação.</p><button onClick={() => navegar('/')}>Voltar ao painel</button></section>
   }
   if (id !== null && !item) {
     return <section className="cartao"><p role="status">Registro não encontrado.</p><button onClick={voltar}>Voltar à lista</button></section>
@@ -83,43 +84,45 @@ export default function Resultados({ modulo, perfil, rota, navegar, formatarData
           <label className="projeto-form__campo">Fim da vigência<input type="date" min={item?.dataInicioVigencia ?? '1000-01-01'} max="9999-12-31" name="dataFimVigencia" defaultValue={item?.dataFimVigencia} required /></label>
         </Formulario>
       ) : erroProjetos ? (
-        <section className="cartao"><p role="alert">Não foi possível carregar os projetos.</p><button onClick={() => { setErroProjetos(false); setVersao((v) => v + 1) }}>Tentar novamente</button></section>
+        <div className="aviso aviso--erro"><p role="alert">Não foi possível carregar os projetos.</p><button onClick={() => { setErroProjetos(false); setVersao((v) => v + 1) }}>Tentar novamente</button></div>
       ) : projetos ? (
         <FormularioProducao item={item} projetos={projetos} salvar={salvar} cancelar={() => navegar(item ? raiz + '/' + id : raiz)} />
-      ) : <p role="status">Carregando projetos…</p>}
+      ) : <p role="status" className="carregando">Carregando projetos…</p>}
     </>
   }
   if (item) {
     return <>
-      <h2>{financiamento ? item.agencia?.nome : item.titulo}</h2>
-      <div className="abas">
-        <button onClick={voltar}>Voltar à lista</button>
-        {podeManter && <button className="primario" onClick={() => navegar(raiz + '/' + id + '/editar')}>Editar</button>}
-        {podeManter && <button onClick={() => setConfirmando(true)}>Excluir</button>}
+      <div className="acoes">
+        <button className="fantasma" onClick={voltar}><IconArrowLeft size={16} stroke={1.8} aria-hidden="true" />Voltar à lista</button>
+        <div className="acoes__fim">
+          {podeManter && <button className="perigo" onClick={() => setConfirmando(true)}><IconTrash size={16} stroke={1.8} aria-hidden="true" />Excluir</button>}
+          {podeManter && <button className="primario" onClick={() => navegar(raiz + '/' + id + '/editar')}><IconPencil size={16} stroke={1.8} aria-hidden="true" />Editar</button>}
+        </div>
       </div>
-      {confirmando && <p>Confirma a exclusão? <button onClick={() => {
+      <h2 className="registro__titulo">{financiamento ? item.agencia?.nome : item.titulo}</h2>
+      {confirmando && <div className="aviso aviso--alerta"><p>Confirma a exclusão?</p><button className="perigo" onClick={() => {
         const excluir = financiamento ? excluirFinanciamento : excluirProducao
         if (executar(() => excluir(perfil, id), 'Registro excluído.')) voltar()
         else setConfirmando(false)
-      }}>Confirmar exclusão</button> <button onClick={() => setConfirmando(false)}>Cancelar</button></p>}
-      {erro && <p role="alert">{erro}</p>}
-      {mensagem && <p role="status">{mensagem}</p>}
+      }}>Confirmar exclusão</button><button onClick={() => setConfirmando(false)}>Cancelar</button></div>}
+      {erro && <p role="alert" className="aviso aviso--erro">{erro}</p>}
+      {mensagem && <p role="status" className="aviso aviso--sucesso">{mensagem}</p>}
       {financiamento ? (
         <>
           <dl className="cartao dados">
             <Item rotulo="Fomento" valor={tiposFomento[item.tipoFomento]} />
-            <Item rotulo="Total" valor={moeda.format(item.valorTotal)} />
-            <Item rotulo="Destinado" valor={moeda.format(item.valorDestinado)} />
-            <Item rotulo="Saldo" valor={moeda.format(item.saldo)} />
-            <Item rotulo="Vigência" valor={formatarData(item.dataInicioVigencia) + ' a ' + formatarData(item.dataFimVigencia)} />
+            <Item rotulo="Total" valor={moeda.format(item.valorTotal)} classe="numero" />
+            <Item rotulo="Destinado" valor={moeda.format(item.valorDestinado)} classe="numero" />
+            <Item rotulo="Saldo" valor={moeda.format(item.saldo)} classe="numero" />
+            <Item rotulo="Vigência" valor={formatarData(item.dataInicioVigencia) + ' a ' + formatarData(item.dataFimVigencia)} classe="data" />
           </dl>
           <section className="cartao">
             <h2>Projetos apoiados</h2>
             {item.projetos.length ? <Tabela nome="Projetos apoiados" colunas={['Projeto', 'Valor destinado', ...(podeManter ? ['Ações'] : [])]}
               linhas={item.projetos.map((apoio) => [
-                apoio.codigoProjeto, <LinkProjeto key="projeto" codigo={apoio.codigoProjeto} navegar={navegar} />, moeda.format(apoio.valorDestinado),
+                apoio.codigoProjeto, <LinkProjeto key="projeto" codigo={apoio.codigoProjeto} navegar={navegar} />, <span key="valor" className="numero">{moeda.format(apoio.valorDestinado)}</span>,
                 ...(podeManter ? [<button key="remover" onClick={() => executar(() => removerAssociacao(perfil, id, apoio.codigoProjeto), 'Associação removida.')}>Remover</button>] : []),
-              ])} /> : <p>Nenhum projeto associado.</p>}
+              ])} /> : <p className="vazio">Nenhum projeto associado.</p>}
             {podeManter && projetos && <Formulario salvar={({ codigoProjeto, valorDestinado }) => {
               associarFinanciamento(perfil, id, codigoProjeto, valorDestinado)
               atualizar((valor) => valor + 1)
@@ -134,16 +137,17 @@ export default function Resultados({ modulo, perfil, rota, navegar, formatarData
               </label>
               <CampoValor nome="valorDestinado" rotulo="Valor destinado (R$)" />
             </Formulario>}
-            {podeManter && !projetos && !erroProjetos && <p role="status">Carregando projetos…</p>}
-            {erroProjetos && <p role="alert">Não foi possível carregar os projetos. <button onClick={() => { setErroProjetos(false); setVersao((v) => v + 1) }}>Tentar novamente</button></p>}
+            {podeManter && !projetos && !erroProjetos && <p role="status" className="carregando">Carregando projetos…</p>}
+            {erroProjetos && <p role="alert" className="aviso aviso--erro">Não foi possível carregar os projetos. <button onClick={() => { setErroProjetos(false); setVersao((v) => v + 1) }}>Tentar novamente</button></p>}
           </section>
         </>
       ) : (
         <>
           <dl className="cartao dados"><Item rotulo="Tipo" valor={tiposProducao[item.tipo]} /><Item rotulo="Ano" valor={item.anoPublicacao} /><Item rotulo="Meio de divulgação" valor={item.meioDivulgacao} /></dl>
-          <section className="cartao"><h2>Autores</h2><ol>{item.autores.map((autor) => <li key={autor.idParticipante}>{autor.nome}</li>)}</ol>
-            <h2>Projetos vinculados</h2><ul>{item.projetos.map((codigo) => <li key={codigo}><LinkProjeto codigo={codigo} navegar={navegar} /></li>)}</ul>
-          </section>
+          <div className="painel-grade">
+            <section className="cartao"><h2>Autores</h2><ol className="lista lista--numerada">{item.autores.map((autor) => <li key={autor.idParticipante}>{autor.nome}</li>)}</ol></section>
+            <section className="cartao"><h2>Projetos vinculados</h2><ul className="lista">{item.projetos.map((codigo) => <li key={codigo}><LinkProjeto codigo={codigo} navegar={navegar} /></li>)}</ul></section>
+          </div>
         </>
       )}
     </>
@@ -151,13 +155,15 @@ export default function Resultados({ modulo, perfil, rota, navegar, formatarData
 
   const selecionados = financiamento ? listarFinanciamentos(perfil, idAgencia) : listarProducoes({ ano, tipo })
   return <section className="cartao">
-    {podeManter && <p><button className="primario" onClick={() => navegar(raiz + '/' + novo)}>{financiamento ? 'Novo financiamento' : 'Nova produção'}</button></p>}
-    <div className="filtro">
-      {financiamento ? <SeletorAgencia agencias={agencias} valor={idAgencia} alterar={setIdAgencia} /> : <>
-        <label>Ano de publicação <CampoAno value={ano} alterar={setAno} /></label>
-        <label>Tipo <select value={tipo} onChange={(evento) => setTipo(evento.target.value)}><option value="">Todos</option><Opcoes itens={tiposProducao} /></select></label>
-      </>}
-      {(idAgencia || ano || tipo) && <button onClick={() => { setIdAgencia(''); setAno(''); setTipo('') }}>Limpar filtros</button>}
+    <div className="barra-lista">
+      <div className="filtro">
+        {financiamento ? <SeletorAgencia agencias={agencias} valor={idAgencia} alterar={setIdAgencia} /> : <>
+          <label className="campo rotulo">Ano de publicação <CampoAno value={ano} alterar={setAno} /></label>
+          <label className="campo rotulo">Tipo <select value={tipo} onChange={(evento) => setTipo(evento.target.value)}><option value="">Todos</option><Opcoes itens={tiposProducao} /></select></label>
+        </>}
+        {(idAgencia || ano || tipo) && <div className="filtro__acoes"><button className="fantasma" onClick={() => { setIdAgencia(''); setAno(''); setTipo('') }}>Limpar filtros</button></div>}
+      </div>
+      {podeManter && <button className="primario" onClick={() => navegar(raiz + '/' + novo)}><IconPlus size={16} stroke={2} aria-hidden="true" />{financiamento ? 'Novo financiamento' : 'Nova produção'}</button>}
     </div>
     {selecionados.length ? <Tabela nome={financiamento ? 'Financiamentos' : 'Produções'} colunas={financiamento
       ? ['Agência', 'Fomento', 'Total', 'Destinado', 'Saldo', 'Vigência'] : ['Título', 'Tipo', 'Ano', 'Autores', 'Projetos']}
@@ -165,12 +171,13 @@ export default function Resultados({ modulo, perfil, rota, navegar, formatarData
         registro.id,
         <button key="abrir" className="link" onClick={() => navegar(raiz + '/' + registro.id)}>{financiamento ? registro.agencia?.nome : registro.titulo}</button>,
         ...(financiamento ? [
-          tiposFomento[registro.tipoFomento], moeda.format(registro.valorTotal), moeda.format(registro.valorDestinado), moeda.format(registro.saldo),
-          formatarData(registro.dataInicioVigencia) + ' a ' + formatarData(registro.dataFimVigencia),
+          tiposFomento[registro.tipoFomento],
+          ...[registro.valorTotal, registro.valorDestinado, registro.saldo].map((valor, i) => <span key={i} className="numero">{moeda.format(valor)}</span>),
+          <span key="vigencia" className="data">{formatarData(registro.dataInicioVigencia) + ' a ' + formatarData(registro.dataFimVigencia)}</span>,
         ] : [
           tiposProducao[registro.tipo], registro.anoPublicacao, registro.autores.map((autor) => autor.nome).join(', '), registro.projetos.join(', '),
         ]),
-      ])} /> : <p role="status">{idAgencia || ano || tipo ? 'Nenhum registro corresponde aos filtros.' : 'Nenhum registro disponível.'}</p>}
+      ])} /> : <p role="status" className="vazio">{idAgencia || ano || tipo ? 'Nenhum registro corresponde aos filtros.' : 'Nenhum registro disponível.'}</p>}
   </section>
 }
 
@@ -233,18 +240,18 @@ function FormularioProducao({ item, projetos, salvar, cancelar }) {
         .map((pessoa) => <option key={pessoa.id} value={pessoa.id}>{pessoa.nome}</option>)}</select></label>
       {autores.length ? <ol>{autores.map((id, indice) => {
         const nome = pessoas.find((pessoa) => pessoa.id === id)?.nome
-        return <li key={id}><span>{nome}</span><div className="abas">
-          <button type="button" disabled={indice === 0} onClick={() => mover(indice, -1)} aria-label={'Subir ' + nome}>Subir</button>
-          <button type="button" disabled={indice === autores.length - 1} onClick={() => mover(indice, 1)} aria-label={'Descer ' + nome}>Descer</button>
-          <button type="button" onClick={() => setAutores((lista) => lista.filter((autor) => autor !== id))} aria-label={'Remover ' + nome}>Remover</button>
+        return <li key={id}><span>{nome}</span><div className="acoes">
+          <button type="button" className="fantasma" disabled={indice === 0} onClick={() => mover(indice, -1)} aria-label={'Subir ' + nome}><IconArrowUp size={15} stroke={1.8} aria-hidden="true" />Subir</button>
+          <button type="button" className="fantasma" disabled={indice === autores.length - 1} onClick={() => mover(indice, 1)} aria-label={'Descer ' + nome}><IconArrowDown size={15} stroke={1.8} aria-hidden="true" />Descer</button>
+          <button type="button" className="fantasma" onClick={() => setAutores((lista) => lista.filter((autor) => autor !== id))} aria-label={'Remover ' + nome}><IconX size={15} stroke={1.8} aria-hidden="true" />Remover</button>
         </div></li>
       })}</ol> : <p>Nenhum autor selecionado.</p>}
     </fieldset>
   </Formulario>
 }
 
-function Item({ rotulo, valor }) {
-  return <div><dt>{rotulo}</dt><dd>{valor}</dd></div>
+function Item({ rotulo, valor, classe }) {
+  return <div><dt>{rotulo}</dt><dd className={classe}>{valor}</dd></div>
 }
 
 function LinkProjeto({ codigo, navegar }) {
@@ -259,7 +266,8 @@ function Tabela({ nome, colunas, linhas }) {
 }
 
 function SeletorAgencia({ agencias, valor, alterar, obrigatorio = false }) {
-  return <label className="projeto-form__campo">Agência
+  // Fora do formulário vira filtro da listagem, por isso também leva as classes de campo.
+  return <label className={'projeto-form__campo' + (alterar ? ' campo rotulo' : '')}>Agência
     <select name="idAgencia" value={alterar ? valor : undefined} defaultValue={alterar ? undefined : valor ?? ''} onChange={alterar ? (evento) => alterar(evento.target.value) : undefined} required={obrigatorio}>
       <option value="">{obrigatorio ? 'Selecione' : 'Todas'}</option>
       {agencias.map((agencia) => <option key={agencia.id} value={agencia.id}>{agencia.sigla} ({agencia.nome})</option>)}

@@ -35,7 +35,7 @@ export default function ProjetoForm({ modo, perfil, projeto, salvar, cancelar })
           <>
             <label className="projeto-form__campo">
               Código
-              <input name="codigo" required maxLength={20} defaultValue={projeto?.codigo} readOnly={!novo} />
+              <input name="codigo" className="numero" required maxLength={20} defaultValue={projeto?.codigo} readOnly={!novo} />
             </label>
             <label className="projeto-form__campo projeto-form__campo--largo">
               Título
