@@ -4,7 +4,7 @@ import { pool } from './db.js'
 const router = Router()
 const erro = (status, message) => Object.assign(new Error(message), {status, codigo: status === 409 ? 'CONFLITO' : 'FINANCIAMENTO'})
 const tipos = new Set(['BOLSA','AUXILIO','CONVENIO','OUTRO'])
-const idValido = v => /^\d+$/.test(v ?? '') && Number(v) > 0 && Number(v) <= 4294967295
+const idValido = v => ['string','number'].includes(typeof v) && /^\d+$/.test(v) && Number(v) > 0 && Number(v) <= 4294967295
 function dinheiro(v) {
   const valor = typeof v === 'string' ? v.replace(',', '.') : ''
   if (!/^\d{1,13}(\.\d{1,2})?$/.test(valor) || Number(valor) <= 0) throw erro(422,'Informe um valor positivo com até duas casas decimais.')
@@ -37,7 +37,7 @@ router.get('/financiamentos/:id/apoios', async (req,res) => {
   res.json({dados})
 })
 
-async function gravar(req,res) {
+async function gravar(req,res,apoio = false) {
   const {id,codigo} = req.params
   if (id && !idValido(id)) throw erro(422,'Financiamento inválido.')
   const conn = await pool.getConnection()
@@ -50,7 +50,7 @@ async function gravar(req,res) {
     let registro = id
     let tabela = 'financiamento'
     const operacao = req.method === 'DELETE' ? 'DELETE' : req.method === 'PATCH' ? 'UPDATE' : 'INSERT'
-    if (codigo || req.path.endsWith('/apoios')) {
+    if (apoio) {
       tabela = 'financiamento_projeto'
       const codigoPublico = codigo ?? req.body?.codigo
       if (typeof codigoPublico !== 'string' || !codigoPublico.trim() || codigoPublico.length > 20) throw erro(422,'Informe o código público do projeto.')
@@ -90,9 +90,9 @@ async function gravar(req,res) {
     throw falha
   } finally { conn.release() }
 }
-router.post('/financiamentos',gravar)
-router.patch('/financiamentos/:id',gravar)
-router.delete('/financiamentos/:id',gravar)
-router.post('/financiamentos/:id/apoios',gravar)
-router.delete('/financiamentos/:id/apoios/:codigo',gravar)
+router.post('/financiamentos',(req,res) => gravar(req,res))
+router.patch('/financiamentos/:id',(req,res) => gravar(req,res))
+router.delete('/financiamentos/:id',(req,res) => gravar(req,res))
+router.post('/financiamentos/:id/apoios',(req,res) => gravar(req,res,true))
+router.delete('/financiamentos/:id/apoios/:codigo',(req,res) => gravar(req,res,true))
 export default router
