@@ -1,4 +1,4 @@
-import { CampoAno } from './Campos.jsx'
+import { CampoAno, CampoValor } from './Campos.jsx'
 import { useEffect, useState } from 'react'
 import { moeda } from './formatadores.js'
 import { listarCadastros } from './services/cadastros.js'
@@ -275,16 +275,4 @@ function Seletor({ nome, rotulo, opcoes, valor }) {
 
 function Opcoes({ itens }) {
   return Object.entries(itens).map(([valor, rotulo]) => <option key={valor} value={valor}>{rotulo}</option>)
-}
-
-function CampoValor({ nome, rotulo, valor }) {
-  const [texto, setTexto] = useState(valor?.replace('.', ',') ?? '')
-  return <label className="projeto-form__campo">{rotulo}
-    <input name={nome} inputMode="decimal" value={texto} required
-      pattern="(?!0+([.,]0+)?$)[0-9]{1,13}([.,][0-9]{1,2})?"
-      title="Informe um valor positivo com até duas casas decimais, por exemplo 250,50."
-      onChange={({ target }) => {
-        if (/^(?:[0-9]{1,13}(?:[.,][0-9]{0,2})?)?$/.test(target.value)) setTexto(target.value)
-      }} />
-  </label>
 }

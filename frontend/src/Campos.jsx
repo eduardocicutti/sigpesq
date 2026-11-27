@@ -1,5 +1,17 @@
 import { useState } from 'react'
 
+export function CampoValor({ nome, rotulo, valor }) {
+  const [texto, setTexto] = useState(valor?.replace('.', ',') ?? '')
+  return <label className="projeto-form__campo">{rotulo}
+    <input name={nome} inputMode="decimal" value={texto} required
+      pattern="(?!0+([.,]0+)?$)[0-9]{1,13}([.,][0-9]{1,2})?"
+      title="Informe um valor positivo com até duas casas decimais, por exemplo 250,50."
+      onChange={({ target }) => {
+        if (/^(?:[0-9]{1,13}(?:[.,][0-9]{0,2})?)?$/.test(target.value)) setTexto(target.value)
+      }} />
+  </label>
+}
+
 export function CampoCpf({ inicial = '' }) {
   const [texto, setTexto] = useState(inicial)
   return <input name="cpf" inputMode="numeric" value={texto} required
