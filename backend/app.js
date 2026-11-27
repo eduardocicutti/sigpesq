@@ -1,5 +1,9 @@
 import express from 'express'
 import projetos from './projetos.js'
+import cadastros from './cadastros.js'
+import consultas from './consultas.js'
+import financiamentos from './financiamentos.js'
+import producoes from './producoes.js'
 import { autenticar, sessao } from './sessao.js'
 
 export const app = express()
@@ -14,7 +18,7 @@ app.use('/api/v1',(req,res,next)=>{
 })
 app.use(express.json({limit:'96kb'}))
 app.use('/api/v1/sessao',sessao)
-app.use('/api/v1',autenticar,projetos)
+app.use('/api/v1',autenticar,projetos,cadastros,consultas,financiamentos,producoes)
 app.use((_req,res)=>res.status(404).json({erro:{codigo:'NAO_ENCONTRADO',mensagem:'Recurso não encontrado.'}}))
 app.use((err,_req,res,_next)=>{
   if (err.type === 'entity.parse.failed') return res.status(400).json({erro:{codigo:'JSON_INVALIDO',mensagem:'JSON inválido.'}})

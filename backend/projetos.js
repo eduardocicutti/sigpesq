@@ -93,6 +93,20 @@ const rota = (handler) => async (req,res,next) => {
   }
 }
 
+router.get('/painel', rota(async (req,res) => {
+  const hoje = new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo'}).format(new Date())
+  const coordenador = req.usuario.perfil === 'Coordenador' ? req.usuario.idParticipante : null
+  const filtro = coordenador === null ? '' : ' AND p.id_coordenador=?'
+  const parametros = coordenador === null ? [] : [coordenador]
+  const [situacoes] = await pool.execute(
+    'SELECT p.situacao,COUNT(*) AS total FROM projeto p WHERE 1=1' + filtro + ' GROUP BY p.situacao',parametros)
+  const [proximos] = await pool.execute(
+    `SELECT ${colunas} ${origem} WHERE p.situacao='EM_ANDAMENTO'
+      AND p.data_termino BETWEEN CAST(? AS DATE) AND DATE_ADD(CAST(? AS DATE), INTERVAL 90 DAY)${filtro}
+      ORDER BY p.data_termino,p.codigo LIMIT 10`,[hoje,hoje,...parametros])
+  res.json({dados:{situacoes:Object.fromEntries(situacoes.map(r => [r.situacao,Number(r.total)])),proximos}})
+}))
+
 router.get('/docentes',rota(async (_req,res) => {
   const [dados] = await pool.execute("SELECT id_participante AS idParticipante,nome FROM participante WHERE tipo='DOCENTE' ORDER BY nome,id_participante")
   res.json({dados})
@@ -119,4 +133,160 @@ router.get('/projetos',rota(async (req,res) => {
 }))
 router.get('/projetos/:codigo',rota(async (req,res) => res.json({dados:await detalhe(pool,req.params.codigo)})))
 router.post('/projetos',rota(async (req,res) => res.status(201).json({dados:await cadastrarProjeto(pool,req.usuario,req.body)})))
+
+async function atualizarProjeto(req, apenasSituacao) {
+  const conexao = await pool.getConnection()
+  try {
+    await conexao.beginTransaction()
+    const [[projeto]] = await conexao.execute(
+      'SELECT codigo, id_coordenador, situacao FROM projeto WHERE codigo_publico=? FOR UPDATE', [req.params.codigo])
+    if (!projeto) throw new ErroProjeto(404, 'NAO_ENCONTRADO', 'Projeto não encontrado.')
+    const coordenador = req.usuario.perfil === 'Coordenador' && req.usuario.idParticipante === projeto.id_coordenador
+    if (!coordenador && (apenasSituacao || req.usuario.perfil !== 'Administrador')) {
+      throw new ErroProjeto(403, 'SEM_PERMISSAO', 'Seu perfil não pode alterar este projeto.')
+    }
+    if (apenasSituacao) {
+      const situacao = req.body?.situacao
+      if (!situacoes.has(situacao)) throw new ErroProjeto(422, 'VALIDACAO', 'Selecione uma situação válida.')
+      await conexao.execute('UPDATE projeto SET situacao=? WHERE codigo=?', [situacao, projeto.codigo])
+    } else {
+      const [, titulo, descricao, inicio, termino] = validarProjeto({
+        ...req.body, codigo: req.params.codigo, idCoordenador: projeto.id_coordenador, situacao: projeto.situacao,
+      }, req.usuario)
+      await conexao.execute('UPDATE projeto SET titulo=?, descricao=?, data_inicio=?, data_termino=? WHERE codigo=?',
+        [titulo, descricao, inicio, termino, projeto.codigo])
+    }
+    await conexao.execute(
+      "INSERT INTO log_auditoria (id_usuario,tabela,operacao,chave_registro,descricao) VALUES (?,'projeto','UPDATE',?,?)",
+      [req.usuario.idUsuario, String(projeto.codigo), apenasSituacao ? 'Situação atualizada.' : 'Dados básicos atualizados.'])
+    const dados = await detalhe(conexao, req.params.codigo)
+    await conexao.commit()
+    return dados
+  } catch (erro) {
+    await conexao.rollback()
+    throw erro
+  } finally {
+    conexao.release()
+  }
+}
+
+router.patch('/projetos/:codigo', rota(async (req, res) => res.json({ dados: await atualizarProjeto(req, false) })))
+router.patch('/projetos/:codigo/situacao', rota(async (req, res) => res.json({ dados: await atualizarProjeto(req, true) })))
+
+const funcoes = new Set(['VICE_COORDENADOR', 'PESQUISADOR', 'BOLSISTA', 'COLABORADOR', 'VOLUNTARIO', 'OUTRO'])
+const equipeUrl = '/projetos/:codigo/participacoes'
+
+async function projetoDaEquipe(db, req) {
+  const [[projeto]] = await db.execute(
+    'SELECT codigo, id_coordenador FROM projeto WHERE codigo_publico=? FOR UPDATE', [req.params.codigo])
+  if (!projeto) throw new ErroProjeto(404, 'NAO_ENCONTRADO', 'Projeto não encontrado.')
+  if (req.usuario.perfil !== 'Coordenador' || req.usuario.idParticipante !== projeto.id_coordenador) {
+    throw new ErroProjeto(403, 'SEM_PERMISSAO', 'Somente o coordenador deste projeto pode gerir os vínculos.')
+  }
+  return projeto.codigo
+}
+
+router.get(equipeUrl + '/candidatos', rota(async (req, res) => {
+  await projetoDaEquipe(pool, req)
+  const [dados] = await pool.execute('SELECT id_participante AS idParticipante, nome FROM participante ORDER BY nome, id_participante')
+  res.json({ dados })
+}))
+
+async function gravarVinculo(req, encerrar) {
+  const { idParticipante, dataEntrada } = encerrar ? req.params : req.body ?? {}
+  const { funcao, dataSaida } = req.body ?? {}
+  if (!inteiro(idParticipante, 4294967295) || !dataValida(dataEntrada)
+      || (!encerrar && !funcoes.has(funcao))
+      || ((encerrar || dataSaida) && (!dataValida(dataSaida) || dataSaida < dataEntrada))) {
+    throw new ErroProjeto(422, 'VALIDACAO', 'Revise o participante, a função e as datas do vínculo.')
+  }
+  const conn = await pool.getConnection()
+  try {
+    await conn.beginTransaction()
+    const codigo = await projetoDaEquipe(conn, req)
+    const chave = [codigo, Number(idParticipante), dataEntrada]
+    if (encerrar) {
+      const [resultado] = await conn.execute(
+        "UPDATE participacao SET data_saida=? WHERE codigo_projeto=? AND id_participante=? AND data_entrada=? AND data_saida IS NULL AND funcao<>'COORDENADOR'",
+        [dataSaida, ...chave])
+      if (!resultado.affectedRows) throw new ErroProjeto(409, 'CONFLITO', 'O vínculo não está aberto ou corresponde à coordenação principal.')
+    } else {
+      await conn.execute('INSERT INTO participacao(codigo_projeto,id_participante,data_entrada,funcao,data_saida) VALUES (?,?,?,?,?)',
+        [...chave, funcao, dataSaida || null])
+    }
+    await conn.execute(
+      "INSERT INTO log_auditoria(id_usuario,tabela,operacao,chave_registro,descricao) VALUES (?,'participacao',?,?,?)",
+      [req.usuario.idUsuario, encerrar ? 'UPDATE' : 'INSERT', chave.join('/'), encerrar ? 'Vínculo encerrado.' : 'Participante vinculado ao projeto.'])
+    const dados = await detalhe(conn, req.params.codigo)
+    await conn.commit()
+    return dados
+  } catch (erro) {
+    await conn.rollback()
+    if (erro.code === 'ER_DUP_ENTRY') throw new ErroProjeto(409, 'DUPLICIDADE', 'Já existe um vínculo para este participante e data.')
+    if (erro.code === 'ER_NO_REFERENCED_ROW_2') throw new ErroProjeto(422, 'VALIDACAO', 'Participante não encontrado.')
+    throw erro
+  } finally {
+    conn.release()
+  }
+}
+
+router.post(equipeUrl, rota(async (req, res) => res.status(201).json({ dados: await gravarVinculo(req, false) })))
+router.patch(equipeUrl + '/:idParticipante/:dataEntrada/encerramento',
+  rota(async (req, res) => res.json({ dados: await gravarVinculo(req, true) })))
+
+router.put('/projetos/:codigo/coordenador', rota(async (req, res) => {
+  if (req.usuario.perfil !== 'Administrador') throw new ErroProjeto(403, 'SEM_PERMISSAO', 'Somente o Administrador pode trocar a coordenação.')
+  const id = req.body?.idCoordenador
+  if (!inteiro(id, 4294967295)) throw new ErroProjeto(422, 'VALIDACAO', 'Selecione um docente.')
+  const hoje = new Intl.DateTimeFormat('sv-SE', {timeZone:'America/Sao_Paulo'}).format(new Date())
+  const conn = await pool.getConnection()
+  try {
+    await conn.beginTransaction()
+    const [[projeto]] = await conn.execute('SELECT codigo,id_coordenador FROM projeto WHERE codigo_publico=? FOR UPDATE', [req.params.codigo])
+    if (!projeto) throw new ErroProjeto(404,'NAO_ENCONTRADO','Projeto não encontrado.')
+    if (projeto.id_coordenador === Number(id)) throw new ErroProjeto(409,'CONFLITO','Este docente já coordena o projeto.')
+    const [[docente]] = await conn.execute('SELECT tipo FROM participante WHERE id_participante=? FOR SHARE', [Number(id)])
+    if (docente?.tipo !== 'DOCENTE') throw new ErroProjeto(422,'VALIDACAO','Selecione um docente.')
+    const [ativos] = await conn.execute(
+      "SELECT data_entrada,id_participante FROM participacao WHERE codigo_projeto=? AND funcao='COORDENADOR' AND data_saida IS NULL FOR UPDATE", [projeto.codigo])
+    if (ativos.length !== 1 || ativos[0].id_participante !== projeto.id_coordenador || ativos[0].data_entrada > hoje) {
+      throw new ErroProjeto(409,'CONFLITO','O projeto não tem uma coordenação vigente que possa ser encerrada.')
+    }
+    await conn.execute("UPDATE participacao SET data_saida=? WHERE codigo_projeto=? AND id_participante=? AND data_entrada=?",
+      [hoje, projeto.codigo, projeto.id_coordenador, ativos[0].data_entrada])
+    await conn.execute("INSERT INTO participacao(codigo_projeto,id_participante,data_entrada,funcao) VALUES (?,?,?,'COORDENADOR')", [projeto.codigo,Number(id),hoje])
+    await conn.execute('UPDATE projeto SET id_coordenador=? WHERE codigo=?', [Number(id),projeto.codigo])
+    await conn.execute("INSERT INTO log_auditoria(id_usuario,tabela,operacao,chave_registro,descricao) VALUES (?,'projeto','UPDATE',?,'Coordenação atualizada.')",
+      [req.usuario.idUsuario,String(projeto.codigo)])
+    const dados = await detalhe(conn, req.params.codigo)
+    await conn.commit()
+    res.json({dados})
+  } catch (erro) {
+    await conn.rollback()
+    if (erro.code === 'ER_DUP_ENTRY') throw new ErroProjeto(409,'DUPLICIDADE','O docente já possui vínculo com esta data de entrada.')
+    throw erro
+  } finally { conn.release() }
+}))
+
+router.delete('/projetos/:codigo', rota(async (req, res) => {
+  const conn = await pool.getConnection()
+  try {
+    await conn.beginTransaction()
+    const [[projeto]] = await conn.execute('SELECT codigo,id_coordenador FROM projeto WHERE codigo_publico=? FOR UPDATE', [req.params.codigo])
+    if (!projeto) throw new ErroProjeto(404,'NAO_ENCONTRADO','Projeto não encontrado.')
+    if (req.usuario.perfil !== 'Administrador' &&
+        (req.usuario.perfil !== 'Coordenador' || req.usuario.idParticipante !== projeto.id_coordenador)) {
+      throw new ErroProjeto(403,'SEM_PERMISSAO','Seu perfil não pode excluir este projeto.')
+    }
+    await conn.execute('DELETE FROM projeto WHERE codigo=?', [projeto.codigo])
+    await conn.execute("INSERT INTO log_auditoria(id_usuario,tabela,operacao,chave_registro,descricao) VALUES (?,'projeto','DELETE',?,'Projeto excluído.')",
+      [req.usuario.idUsuario,String(projeto.codigo)])
+    await conn.commit()
+    res.sendStatus(204)
+  } catch (erro) {
+    await conn.rollback()
+    if (erro.code === 'ER_ROW_IS_REFERENCED_2') throw new ErroProjeto(409,'CONFLITO','O projeto possui vínculos. O coordenador pode marcar a situação como Cancelado.')
+    throw erro
+  } finally { conn.release() }
+}))
 export default router

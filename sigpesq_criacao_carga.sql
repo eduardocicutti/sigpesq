@@ -2,7 +2,8 @@
 -- Script de criação do banco e carga de dados de exemplo
 
 
-DROP DATABASE IF EXISTS sigpesq;
+-- Primeira instalação: execute em modo batch, sem --force.
+-- Se a base já existir, CREATE DATABASE deve interromper a importação.
 CREATE DATABASE sigpesq
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_0900_ai_ci;
