@@ -49,4 +49,8 @@ Abra `http://localhost:5173`. No Linux, use `npm`, copie o exemplo com `cp .env.
 
 ## Verificação
 
+### Contas para testar os quatro perfis
+
+Em um banco local de demonstração já migrado, informe uma senha temporária pela variável `DEMO_PASSWORD` e execute `node --env-file=.env demo-usuarios.js` na pasta `backend`. O comando usa os participantes de exemplo disponíveis para vincular as contas de Coordenador e Participante. Os hashes são gravados no MySQL. Mantenha a senha fora do Git.
+
 Com o usuário criado, cadastre um projeto e anote o código público. Recarregue a página e localize o projeto pelo código. No detalhe, confira o docente na equipe. A operação também gera um registro INSERT em log_auditoria na mesma transação. Execute `npm test` em backend para os testes automatizados.
