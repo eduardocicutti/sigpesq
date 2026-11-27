@@ -14,7 +14,7 @@ async function cadastrar() {
   const lock = 'sigpesq_primeiro_administrador'
   try {
     const [[{obtido}]] = await conn.execute('SELECT GET_LOCK(?, 5) AS obtido',[lock])
-    if (obtido !== 1) throw Error('Cadastro de administrador em andamento.')
+    if (Number(obtido) !== 1) throw Error('Cadastro de administrador em andamento.')
     await conn.beginTransaction()
     const [admins] = await conn.query("SELECT id_usuario FROM usuario WHERE perfil='ADMINISTRADOR' LIMIT 1")
     if (admins.length) throw Error('A base já possui administrador.')
