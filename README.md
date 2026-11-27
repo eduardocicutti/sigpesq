@@ -73,17 +73,24 @@ Os relacionamentos devem representar participantes em vários projetos, financia
 | Material | Local |
 | :-- | :-- |
 | Enunciado do trabalho | [Case_SIGPesq.pdf](docs/fontes/Case_SIGPesq.pdf) |
+| Instalação da API e do MySQL | [Guia do backend](backend/README.md) |
+| Modo conectado, demonstração e testes | [Guia do frontend](frontend/README.md) |
+| Esquema, entrega acadêmica e roteiro da banca | [Entrega e rastreabilidade](docs/ENTREGA.md) |
 
-O frontend possui uma demonstração em memória e um modo conectado ao MySQL para login, consulta e cadastro de projetos. Consulte as [instruções de integração](backend/README.md) para executar o modo conectado.
+O modo conectado reúne sessão, painel, projetos e equipes, participantes, agências, financiamentos, produções, consultas e auditoria. A demonstração em memória é uma opção separada.
 
 ### Executar o frontend
 
-No PowerShell do Windows, use `npm.cmd` caso a política de execução bloqueie `npm.ps1`:
+Prepare o banco conforme o [guia do backend](backend/README.md). Na raiz do repositório, abra dois terminais PowerShell:
 
 ```powershell
-cd frontend
-npm.cmd run dev
+# Terminal 1
+npm.cmd --prefix backend start
+# Terminal 2
+npm.cmd --prefix frontend run dev -- --port 5173 --strictPort
 ```
+
+Abra [http://localhost:5173](http://localhost:5173). No Linux, use `npm` no lugar de `npm.cmd`.
 
 ---
 
