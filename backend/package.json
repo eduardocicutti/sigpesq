@@ -1,0 +1,19 @@
+{
+  "name": "sigpesq-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.12" },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "node --env-file-if-exists=.env --watch server.js",
+    "admin": "node --env-file-if-exists=.env admin.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "mysql2": "^3.15.0",
+    "@inquirer/password": "^4.0.0",
+    "express-rate-limit": "^8.0.0"
+  }
+}

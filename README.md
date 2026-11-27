@@ -74,7 +74,7 @@ Os relacionamentos devem representar participantes em vários projetos, financia
 | :-- | :-- |
 | Enunciado do trabalho | [Case_SIGPesq.pdf](docs/fontes/Case_SIGPesq.pdf) |
 
-**Etapa atual:** planejamento do frontend. A implementação da interface, da API e a integração com o MySQL fazem parte das próximas etapas.
+O frontend possui uma demonstração em memória e um modo conectado ao MySQL para login, consulta e cadastro de projetos. Consulte as [instruções de integração](backend/README.md) para executar o modo conectado.
 
 ### Executar o frontend
 
