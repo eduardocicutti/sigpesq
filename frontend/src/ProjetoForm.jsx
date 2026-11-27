@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { docentes, idDocenteDemonstracao, situacoes } from './services/projetos.js'
 import './projetos-form.css'
 
-export default function ProjetoForm({ modo, perfil, projeto, salvar, cancelar }) {
+export default function ProjetoForm({ modo, perfil, projeto, salvar, cancelar, opcoesDocentes = docentes, nomeCoordenador = docentes[idDocenteDemonstracao] }) {
   const [erro, setErro] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [inicio, setInicio] = useState(projeto?.dataInicio ?? '')
@@ -58,10 +58,10 @@ export default function ProjetoForm({ modo, perfil, projeto, salvar, cancelar })
               {novo && perfil === 'Administrador' ? (
                 <select name="idCoordenador" required defaultValue="">
                   <option value="" disabled>Selecione um docente</option>
-                  {Object.entries(docentes).map(([id, nome]) => <option value={id} key={id}>{nome}</option>)}
+                  {Object.entries(opcoesDocentes).map(([id, nome]) => <option value={id} key={id}>{nome}</option>)}
                 </select>
               ) : (
-                <input value={projeto?.coordenador ?? docentes[idDocenteDemonstracao]} readOnly />
+                <input value={projeto?.coordenador ?? nomeCoordenador} readOnly />
               )}
             </label>
           </>

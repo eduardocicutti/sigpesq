@@ -21,7 +21,15 @@ npm.cmd run dev
 
 Verificações: `npm.cmd run build` e `npm.cmd run lint`.
 
-O login é simulado. A tela de acesso mostra o usuário de cada perfil e a senha de demonstração `sigpesq-demo`.
+### Modos de execução
+
+Por padrão, a aplicação abre em modo demonstração. Nesse modo, a tela de acesso mostra o usuário de cada perfil e a senha `sigpesq-demo`. As descrições dos módulos abaixo referem-se à demonstração.
+
+Para usar o MySQL, prepare e inicie a API no diretório `backend/`. No frontend, crie `.env.local` com `VITE_MODO=api` e reinicie o Vite. O navegador acessa `/api/v1` na própria origem. No desenvolvimento o Vite encaminha essas chamadas para `127.0.0.1:3001`. Use a mesma origem configurada em `FRONTEND_ORIGIN` no backend. Em hospedagem, configure um proxy para esse caminho e compile com `VITE_MODO=api`.
+
+O modo integrado oferece login por conta cadastrada, restauração de sessão, logout, busca e paginação de projetos, detalhe com equipe e criação por Administrador ou Coordenador. A identidade e o perfil vêm da sessão do servidor.
+
+O teste de navegador integrado requer Firefox e uma API em execução com banco **descartável**. Configure `FRONTEND_ORIGIN=http://127.0.0.1:5191` na API e `VITE_MODO=api`, `TESTE_API_LOGIN` e `TESTE_API_SENHA` no ambiente do teste. Use uma conta administrativa da base de testes. Execute `node teste-navegador.mjs` na pasta frontend. O roteiro cria um projeto, abre a equipe, recarrega a página e encerra a sessão.
 
 Em Projetos, é possível filtrar por título ou código, situação e coordenação. Os resultados e o número da página podem ser reabertos pela URL. Administração e coordenação podem cadastrar projetos. A edição e a alteração de situação respeitam o perfil e a coordenação do projeto. A aba Equipe reúne vínculos, períodos encerrados e troca administrativa de coordenação. As abas Produções e Financiamentos refletem as associações dos respectivos módulos.
 

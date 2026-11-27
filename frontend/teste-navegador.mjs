@@ -6,7 +6,11 @@ import { join } from 'node:path'
 import assert from 'node:assert/strict'
 import { setTimeout as delay } from 'node:timers/promises'
 
-const server = await createServer({server:{host:'127.0.0.1',port:0}})
+const integrado = process.env.VITE_MODO === 'api'
+if (integrado && (!process.env.TESTE_API_LOGIN || !process.env.TESTE_API_SENHA)) {
+  throw Error('Informe TESTE_API_LOGIN e TESTE_API_SENHA de uma base descartável. O teste cadastra um projeto.')
+}
+const server = await createServer({server:{host:'127.0.0.1',port:integrado ? 5191 : 0,strictPort:true}})
 await server.listen()
 const url = server.resolvedUrls.local[0]
 const profile = await mkdtemp(join(tmpdir(),'sigpesq-firefox-'))
@@ -39,10 +43,36 @@ try {
     if(r.type==='exception')throw Error(r.exceptionDetails.text)
     return r.result.value
   }
-  for(const width of [360,768,1440]){
+  const aguardar = async expressao => {
+      for (let i=0; i<100; i++) {
+        if (await evaluate(expressao)) return
+        await delay(100)
+      }
+      throw Error('A interface não atingiu o estado esperado: ' + expressao)
+    }
+  if (integrado) {
+    await call('browsingContext.navigate',{context,url,wait:'complete'})
+    await aguardar("Boolean(document.querySelector('#login'))")
+    await evaluate(`document.querySelector('#login').value=${JSON.stringify(process.env.TESTE_API_LOGIN)};
+      document.querySelector('#senha').value=${JSON.stringify(process.env.TESTE_API_SENHA)};
+      document.querySelector('form').requestSubmit()`)
+    await aguardar("Boolean(document.querySelector('table tbody tr'))")
+    await evaluate("[...document.querySelectorAll('button')].find(b=>b.textContent==='Novo projeto').click()")
+    await aguardar("Boolean(document.querySelector('[name=idCoordenador] option:nth-child(2)'))")
+    const codigo='QA-'+Date.now()
+    await evaluate(`const f=document.querySelector('form');for(const [k,v] of Object.entries({codigo:${JSON.stringify(codigo)},titulo:'Projeto de integração',descricao:'Verificação funcional',dataInicio:'2026-01-01',dataTermino:'2026-12-31',idCoordenador:f.elements.idCoordenador.options[1].value})){const e=f.elements[k];Object.getOwnPropertyDescriptor(Object.getPrototypeOf(e),'value').set.call(e,v);e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}))}f.requestSubmit()`)
+    const equipe = "document.querySelector('main h2')?.textContent==='Projeto de integração' && Boolean(document.querySelector('main li'))"
+    await aguardar(equipe)
+    await call('browsingContext.navigate',{context,url:url+'projetos/'+codigo,wait:'complete'})
+    await aguardar(equipe)
+    await evaluate("[...document.querySelectorAll('button')].find(b=>b.textContent==='Sair').click()")
+    await aguardar("Boolean(document.querySelector('#login'))")
+    console.log('Login, listagem, cadastro, equipe, persistência após recarga e logout validados.',codigo)
+  } else for(const width of [360,768,1440]){
     await call('browsingContext.setViewport',{context,viewport:{width,height:900}})
     for(const [perfil,login] of Object.entries({Administrador:'admin',Coordenador:'coordenador',Participante:'participante',Gestor:'gestor'})){
       await call('browsingContext.navigate',{context,url,wait:'complete'})
+      await aguardar("document.activeElement === document.querySelector('h1') && !!document.querySelector('#senha')")
       await evaluate("document.querySelector('#senha').focus()")
       await call('input.performActions',{context,actions:[{type:'key',id:'teclado',actions:[{type:'keyDown',value:'\uE004'},{type:'keyUp',value:'\uE004'},{type:'keyDown',value:'\uE007'},{type:'keyUp',value:'\uE007'}]}]})
       assert.equal(await evaluate("document.querySelector('#senha').type"),'text')
